@@ -1,10 +1,11 @@
 # cecom — Claude Code plugin
 
-Personal engineering toolkit. Replaces the `context-gardener` plugin (v0.1.0) and bundles two skills in one package.
+Personal engineering toolkit. Replaces the `context-gardener` plugin (v0.1.0) and bundles three skills in one package.
 
 | Skill | What it does | How to invoke |
 |---|---|---|
 | **engineering-manifesto** | New-project kickoff (tier T0–T3, kickoff questions, ADRs, project CLAUDE.md, permission rules) and applying the manifesto to existing projects **without overwriting anything**. During design and review, finds and applies the relevant manifesto sections. | `/kickoff`, "we're starting a new project", "apply the manifesto to this project" |
+| **production-readiness-audit** | Evidence-based audit of AI-generated / vibe-coded apps: ~290 checks across 16 areas (contracts, locale/time/money, lifecycle, networking, concurrency and idempotency, performance, auth, security, privacy, migrations, push and deep links, errors and observability, config and release, UI and accessibility, testing, AI-generated code and LLM features). Each check is PASS / FAIL / UNCERTAIN / NOT_APPLICABLE with `file:line` evidence; produces a report with a release verdict, then fixes findings one at a time and re-audits. | `/audit`, "is this production ready?", "audit this app before release" |
 | **context-gardener** | Keeps CLAUDE.md and project memory files accurate and lean: verifies every claim against the repo, removes duplicate and stale content, splits bloated files. | `/tidy-context`, or Claude offers it on its own |
 
 A SessionStart hook reminds Claude when context files have grown large or haven't been groomed in a while (defaults: 150 lines / 21 days). It never edits anything.
@@ -17,6 +18,7 @@ cecom/
 │   ├── plugin.json
 │   └── marketplace.json          For local installation
 ├── commands/
+│   ├── audit.md                  /audit
 │   ├── kickoff.md                /kickoff
 │   └── tidy-context.md           /tidy-context
 ├── hooks/
@@ -24,6 +26,7 @@ cecom/
 │   └── check-staleness.sh        Context file size/age check (works on macOS bash 3.2)
 └── skills/
     ├── engineering-manifesto/    SKILL.md, scripts/, references/, assets/
+    ├── production-readiness-audit/  SKILL.md, references/method.md, references/checks/, scripts/
     └── context-gardener/         SKILL.md
 ```
 
@@ -60,10 +63,13 @@ bash ~/.claude/plugins/cache/cecom/cecom/<version>/skills/engineering-manifesto/
 
 ```bash
 bash skills/engineering-manifesto/scripts/test_apply.sh
+python3 skills/production-readiness-audit/scripts/catalog.py lint
+python3 -m unittest discover -s skills/production-readiness-audit/scripts/tests
 ```
 
 ## Changelog
 
+- **0.3.0** — Added the `production-readiness-audit` skill and the `/audit` command: a 286-check catalog, an evidence and severity method, profile detection, plan/report scripts with validation, and tests.
 - **0.2.0** — Renamed `context-gardener` to `cecom`; added the `engineering-manifesto` skill and the `/kickoff` command; fixed the SessionStart hook to run on macOS's stock bash 3.2 (removed `mapfile`).
 - **0.1.0** — Initial `context-gardener` release.
 
