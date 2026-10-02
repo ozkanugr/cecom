@@ -1,0 +1,14 @@
+{
+  "name": "cecom",
+  "owner": {
+    "name": "cecom"
+  },
+  "description": "Personal marketplace for the cecom plugin: engineering manifesto kickoff/installer and context-gardener.",
+  "plugins": [
+    {
+      "name": "cecom",
+      "source": "./",
+      "description": "Engineering manifesto kickoff/installer plus context-gardener for keeping CLAUDE.md and memory files accurate and lean."
+    }
+  ]
+}

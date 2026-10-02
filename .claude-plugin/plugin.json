@@ -1,0 +1,10 @@
+{
+  "name": "cecom",
+  "description": "Personal engineering toolkit. engineering-manifesto: project kickoff (tier, kickoff questions, ADRs, CLAUDE.md, permission rules) and additive manifesto installation that never overwrites existing files. context-gardener: keeps CLAUDE.md and project memory files accurate and lean, verifying claims against the repo and nagging when context goes stale.",
+  "version": "0.2.0",
+  "license": "MIT",
+  "author": {
+    "name": "cecom"
+  },
+  "keywords": ["claude-code-plugin", "engineering", "kickoff", "adr", "claude-md", "context", "memory", "maintenance"]
+}
