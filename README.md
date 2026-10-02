@@ -30,9 +30,11 @@ cecom/
 ## Installation
 
 ```bash
-claude plugin marketplace add ~/Desktop/cecom
+claude plugin marketplace add ozkanugr/cecom
 claude plugin install cecom@cecom
 ```
+
+From a local clone instead: `claude plugin marketplace add /path/to/cecom`.
 
 Remove the old plugin to avoid duplicates (the skill would appear twice and the hook would run twice):
 
@@ -43,7 +45,7 @@ claude plugin uninstall context-gardener@context-gardener
 To add the core rules globally (once; existing `~/.claude/CLAUDE.md` content is left untouched):
 
 ```bash
-bash ~/Desktop/cecom/skills/engineering-manifesto/scripts/apply.sh global
+bash ~/.claude/plugins/cache/cecom/cecom/<version>/skills/engineering-manifesto/scripts/apply.sh global
 ```
 
 ## Manifesto installation guarantees
