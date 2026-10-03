@@ -161,6 +161,22 @@ class RenderTests(unittest.TestCase):
                 self.assertTrue(any(expected in p for p in self.problems([row])),
                                 f"expected problem containing {expected!r}")
 
+    def test_secrets_in_findings_are_rejected(self):
+        leaks = {
+            "Stripe key": "sk_live_" + "a1B2c3D4e5F6g7H8i9",
+            "AWS access key": "AKIA" + "ABCDEFGHIJKLMNOP",
+            "GitHub token": "ghp_" + "a" * 36,
+            "private key": "-----BEGIN RSA PRIVATE KEY-----",
+        }
+        for kind, value in leaks.items():
+            with self.subTest(kind=kind):
+                row = finding("SEC-002", "FAIL", severity="P0",
+                              evidence=[{"file": ".env", "line": 3, "note": f"STRIPE_KEY={value}"}])
+                self.assertTrue(any(kind in p for p in self.problems([row])))
+        redacted = finding("SEC-002", "FAIL", severity="P0",
+                           evidence=[{"file": ".env", "line": 3, "note": "live Stripe secret key (sk_l…) committed"}])
+        self.assertEqual(self.problems([redacted]), [])
+
     def test_pass_with_search_record_only_is_valid(self):
         row = finding("SEC-002", "PASS", evidence=[], searched=["gitleaks detect --no-banner"])
         self.assertEqual(self.problems([row]), [])

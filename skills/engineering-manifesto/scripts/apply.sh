@@ -25,6 +25,9 @@ BACKUP_DIR="${STABLE_DIR}/backups"
 VERSION="1.1"
 
 # Paths written into CLAUDE.md files use ~ so they work for any user with the skill installed.
+# sed_repl <text> — escape text for use as a sed replacement with | as the delimiter
+sed_repl() { printf '%s' "$1" | sed -e 's/[\\|&]/\\&/g'; }
+
 tilde() { case "$1" in "$HOME"/*) printf '~%s' "${1#"$HOME"}" ;; *) printf '%s' "$1" ;; esac; }
 BEGIN_PREFIX="<!-- engineering-manifesto:begin"
 BEGIN="${BEGIN_PREFIX} v${VERSION} — managed block, edit outside it -->"
@@ -162,8 +165,8 @@ apply_project_claude_md() {
   local base="$target"
   if [ ! -f "$target" ]; then
     base="${WORK}/seed.md"
-    sed -e "s|{{PROJECT_NAME}}|$(basename "$dir")|" -e "s|{{TIER}}|${tier}|" \
-        -e "s|{{MANIFESTO}}|$(tilde "$STABLE_MANIFESTO")|" "${TEMPLATES}/project-claude.md" > "$base"
+    sed -e "s|{{PROJECT_NAME}}|$(sed_repl "$(basename "$dir")")|" -e "s|{{TIER}}|$(sed_repl "$tier")|" \
+        -e "s|{{MANIFESTO}}|$(sed_repl "$(tilde "$STABLE_MANIFESTO")")|" "${TEMPLATES}/project-claude.md" > "$base"
   fi
 
   # Only list what the project does not already document. Patterns include Turkish

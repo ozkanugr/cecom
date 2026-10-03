@@ -19,6 +19,8 @@ Pick the branch, run its steps in order, then run **Verify**. `SKILL_DIR` is the
 - **Evidence or it didn't happen.** Read `references/method.md` before collecting evidence. Statuses come from files you opened and commands you ran; "looks fine" is `UNCERTAIN`, not `PASS`. An absence claim needs the exact searches in `searched`.
 - **Audit and fix are separate passes.** Never change project code during A, B or D. Fixing while auditing changes the evidence for other checks and produces a diff no one can review.
 - **Never overwrite.** Reports and findings get a new dated file; `render_report.py` refuses to overwrite an existing report.
+- **Never copy secrets into findings.** Cite where a secret is, not its value (at most 4 leading characters); `render_report.py` rejects recognizable keys. A found secret must be rotated — say so. Reports describe weaknesses: suggest the user review them before committing to a public repository.
+- **Run project commands only when trusted.** Build/test scripts execute the project's code; for code of unknown origin ask first. Never run anything that deploys, migrates shared data, sends messages, or touches production.
 - **Respect the engineering manifesto.** If the project declares `Tier: T0–T3` in `CLAUDE.md`, use it: for T0 suggest a scoped audit (security, config-release, ai-generated); for T2/T3 run the full audit. Fixes that touch auth, DB schema, dependencies, CI or production configuration need the user's approval first.
 
 ## A. Full audit

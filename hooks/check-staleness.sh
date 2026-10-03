@@ -12,6 +12,13 @@ LINE_THRESHOLD="${CONTEXT_GARDENER_LINE_THRESHOLD:-150}"
 DAYS_THRESHOLD="${CONTEXT_GARDENER_DAYS_THRESHOLD:-21}"
 
 LOG_FILE=".claude/.context-gardener-log"
+MAX_DEPTH="${CONTEXT_GARDENER_MAX_DEPTH:-6}"
+
+# Only look inside a project. A session started in $HOME or / would otherwise walk the
+# whole disk at every session start.
+case "$PWD" in
+  "$HOME" | / ) exit 0 ;;
+esac
 
 # --- find context files in scope ---
 # Root/nested CLAUDE.md, plus any files under .claude/context/, skipping the
@@ -24,8 +31,9 @@ while IFS= read -r f; do
   total_lines=$((total_lines + n))
   file_count=$((file_count + 1))
 done < <(
-  find . \
-    \( -path '*/node_modules' -o -path '*/.git' -o -path '*/vendor' -o -path '*/dist' -o -path '*/build' \) -prune \
+  find . -maxdepth "$MAX_DEPTH" \
+    \( -path '*/node_modules' -o -path '*/.git' -o -path '*/vendor' -o -path '*/dist' -o -path '*/build' \
+       -o -path '*/Pods' -o -path '*/DerivedData' -o -path '*/.venv' -o -path '*/Library' \) -prune \
     -o \( -name 'CLAUDE.md' -o -path './.claude/context/*.md' \) -type f -print \
     2>/dev/null
 )

@@ -1,7 +1,7 @@
 {
   "name": "cecom",
   "description": "Personal engineering toolkit. engineering-manifesto: project kickoff (tier, kickoff questions, ADRs, CLAUDE.md, permission rules) and additive manifesto installation that never overwrites existing files. production-readiness-audit: evidence-based audit of AI-generated apps (~290 checks, PASS/FAIL/UNCERTAIN with file:line evidence, report, fix and re-audit). context-gardener: keeps CLAUDE.md and project memory files accurate and lean.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "license": "MIT",
   "author": {
     "name": "cecom"

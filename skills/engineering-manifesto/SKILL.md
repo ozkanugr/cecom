@@ -58,7 +58,7 @@ Existing `CLAUDE.md`, settings and docs hold knowledge you can't see; overwritin
    ```bash
    bash SKILL_DIR/scripts/apply.sh project <dir> [--tier <tier>]
    ```
-   It refreshes the managed block in `CLAUDE.md` (or `.claude/CLAUDE.md`; creates `CLAUDE.md` from the template if neither exists), refreshes the copies in `~/.claude/engineering/`, creates `docs/adr/0000-template.md` only if missing, appends missing deny/ask rules to `.claude/settings.json`, and backs up every changed file to `~/.claude/engineering/backups/<timestamp>/`.
+   It refreshes the managed block in `CLAUDE.md` (or `.claude/CLAUDE.md`; creates `CLAUDE.md` from the template if neither exists), refreshes the copies in `~/.claude/engineering/`, creates `docs/adr/0000-template.md` only if missing, appends missing deny/ask rules to `.claude/settings.json` (defense in depth only: Bash rules match command text and can be sidestepped, so tell the user they don't replace keeping secrets out of the repo or server-side branch protection), and backs up every changed file to `~/.claude/engineering/backups/<timestamp>/`.
    **Done when:** the command exits 0 and prints `created`, `updated`, or `unchanged` for each file.
 
 3. **Handle messages:**

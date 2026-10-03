@@ -9,7 +9,8 @@ Read this before collecting evidence. Subagents get this file verbatim.
 3. **Absence needs a search record.** A claim like "no request has a timeout" or "no secrets are committed" is only as good as the search behind it. List the exact searches in `searched` (e.g. `rg -n "timeout" src/`). If you can't search thoroughly enough to be confident, the status is `UNCERTAIN`.
 4. **Runtime behavior is not static evidence.** Many lifecycle, memory and UI checks depend on what happens on a device. Static evidence is the code path that handles the scenario (e.g. an `onSaveInstanceState` that persists the draft). If correctness can only be shown by running the app, mark `UNCERTAIN` and name, in `finding`, the runtime scenario that would settle it; it feeds the test plan.
 5. **Platform defaults count only when cited.** "React Query retries 3 times by default" is evidence only together with the version in the lockfile and the config line that leaves the default in place.
-6. **Audit first, fix later.** Don't change code while auditing. Fixes alter the evidence for other checks, and a mixed audit-and-fix diff can't be reviewed.
+6. **Never copy a secret into a finding.** When a check finds a credential, token, password or private key, cite `file:line` and the kind of secret; quote at most the first 4 characters (`sk_l…`). Audit reports are often committed or shared, which would leak the secret a second time. `render_report.py` rejects findings that contain recognizable keys. Tell the user a found secret must be rotated, not just removed (removing it from the file does not remove it from Git history).
+7. **Audit first, fix later.** Don't change code while auditing. Fixes alter the evidence for other checks, and a mixed audit-and-fix diff can't be reviewed.
 
 ## Statuses
 
@@ -81,6 +82,10 @@ One JSON object per line, one line per check. `scripts/render_report.py` validat
 | `reason` | string | Required for NOT_APPLICABLE |
 | `fix` | object | `{"status": "none" \| "proposed" \| "fixed", "summary", "files"}` |
 | `test` | string | Required when `fix.status` is `fixed`: the test added or the command run |
+
+## Running project commands
+
+Builds, tests and package scripts execute the project's code. Run them only for a repository the user trusts and has asked you to audit; for code of unknown origin, ask first or limit yourself to static reading. Never run commands that deploy, migrate a shared database, send messages, or touch production.
 
 ## Searching efficiently
 

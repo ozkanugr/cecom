@@ -49,7 +49,8 @@ check "missing architecture listed"    grep -q 'Add an Architecture map' "$P/CLA
 check "settings keeps allow rule"      sh -c "jq -e '.permissions.allow == [\"Bash(npm test:*)\"]' '$P/.claude/settings.json'"
 check "settings keeps other keys"      sh -c "jq -e '.model == \"x\"' '$P/.claude/settings.json'"
 check "settings no duplicate deny"     sh -c "test \$(jq '[.permissions.deny[] | select(. == \"Read(./.env)\")] | length' '$P/.claude/settings.json') -eq 1"
-check "settings adds force-push deny"  sh -c "jq -e '.permissions.deny | index(\"Bash(git push --force:*)\")' '$P/.claude/settings.json'"
+check "settings adds force-push deny"  sh -c "jq -e '.permissions.deny | index(\"Bash(git push --force *)\")' '$P/.claude/settings.json'"
+check "settings adds any-depth .env"   sh -c "jq -e '.permissions.deny | index(\"Read(.env)\")' '$P/.claude/settings.json'"
 check "backup written"                 test -n "$(find "$HOME/.claude/engineering/backups" -name CLAUDE.md -path "*existing*")"
 out="$(run project "$P")"
 check "second run all unchanged"       sh -c "! printf '%s' \"\$1\" | grep -Eq 'updated|created'" _ "$out"
@@ -70,6 +71,11 @@ sed -i.bak 's/^install: TODO/install: npm ci/' "$P/CLAUDE.md" && rm -f "$P/CLAUD
 run project "$P" >/dev/null
 check "user edit survives rerun"       grep -qx 'install: npm ci' "$P/CLAUDE.md"
 check "tier kept on rerun"             grep -qx 'Tier: T1' "$P/CLAUDE.md"
+
+# --- special characters in the project name don't break the template
+P="$T/a&b|c\\d"; mkdir -p "$P"
+run project "$P" --tier T2 >/dev/null
+check "special-char name kept literally" grep -qxF '# a&b|c\d' "$P/CLAUDE.md"
 
 # --- .claude/CLAUDE.md location is respected
 P="$T/dotclaude"; mkdir -p "$P/.claude"; printf '# Dot\n' > "$P/.claude/CLAUDE.md"

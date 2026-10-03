@@ -21,6 +21,41 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from catalog import SEVERITIES, load  # noqa: E402
 
 STATUSES = ("PASS", "FAIL", "UNCERTAIN", "NOT_APPLICABLE")
+
+# Provider-specific credential shapes. Findings must cite *where* a secret is, never the secret:
+# reports are often committed or shared, which would leak it a second time.
+SECRET_PATTERNS = (
+    ("AWS access key", re.compile(r"\b(AKIA|ASIA)[0-9A-Z]{16}\b")),
+    ("GitHub token", re.compile(r"\bgh[pousr]_[A-Za-z0-9]{30,}")),
+    ("GitHub fine-grained token", re.compile(r"\bgithub_pat_[A-Za-z0-9_]{30,}")),
+    ("Stripe key", re.compile(r"\b(sk|rk)_(live|test)_[A-Za-z0-9]{16,}")),
+    ("Anthropic key", re.compile(r"\bsk-ant-[A-Za-z0-9_-]{20,}")),
+    ("OpenAI key", re.compile(r"\bsk-(proj-)?[A-Za-z0-9_-]{32,}")),
+    ("Slack token", re.compile(r"\bxox[abprs]-[A-Za-z0-9-]{10,}")),
+    ("Google API key", re.compile(r"\bAIza[0-9A-Za-z_-]{35}")),
+    ("private key", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")),
+    ("JWT", re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}")),
+)
+
+
+def secret_kind(text):
+    for kind, rx in SECRET_PATTERNS:
+        if rx.search(text or ""):
+            return kind
+    return None
+
+
+def texts_of(f):
+    """Every free-text value in a finding that ends up in the report."""
+    out = [f.get("finding"), f.get("reason"), f.get("test"), f.get("check")]
+    out += [s for s in f.get("searched") or [] if isinstance(s, str)]
+    for e in f.get("evidence") or []:
+        if isinstance(e, dict):
+            out += [e.get("note"), e.get("cmd"), e.get("file")]
+    fix = f.get("fix")
+    if isinstance(fix, dict):
+        out += [fix.get("summary")] + [x for x in fix.get("files") or [] if isinstance(x, str)]
+    return [str(t) for t in out if t]
 FIX_STATUSES = ("none", "proposed", "fixed")
 SEV_RANK = {s: i for i, s in enumerate(SEVERITIES)}
 
@@ -90,6 +125,12 @@ def validate(findings, catalog, plan=None):
                 problems.append(f"{w}: {fid} UNCERTAIN needs a finding saying what is unknown")
         if status == "NOT_APPLICABLE" and not (f.get("reason") or "").strip():
             problems.append(f"{w}: {fid} NOT_APPLICABLE needs a reason")
+        for text in texts_of(f):
+            kind = secret_kind(text)
+            if kind:
+                problems.append(f"{w}: {fid} appears to contain a {kind}; redact it "
+                                "(keep at most the first 4 characters, e.g. 'sk_l…') and cite file:line instead")
+                break
         fix = f.get("fix")
         if fix is not None:
             if not isinstance(fix, dict) or fix.get("status") not in FIX_STATUSES:

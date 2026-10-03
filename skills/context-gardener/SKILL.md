@@ -83,10 +83,13 @@ Grooming is a destructive edit to a file the user depends on every session. Befo
 - Summarize what you're keeping but rewording (verbose → tightened), only if the rewording changes meaning — pure style tightening doesn't need a line-by-line justification.
 - Flag anything you couldn't verify either way and ask, rather than guessing.
 - Get a go-ahead before writing, unless the user invoked this expecting a direct edit (e.g. `/tidy-context --apply` or has said "just do it" this session) — treat this the same as any other destructive-action rule: confirm first by default.
+- Make the edit recoverable before writing, even with `--apply`: if a file in scope is tracked by Git with no uncommitted changes, Git is the backup; otherwise copy it first to `.claude/context-backups/<timestamp>/` (and say where). Never edit a file that has uncommitted changes from someone else's work without asking.
 
 ### 8. Record the pass
 
 After a grooming pass completes and is applied, write the current time to `.claude/.context-gardener-log` (one epoch-seconds integer, overwrite the file). This is what the maintenance hook uses to know when the context was last groomed — without it, the hook can't tell "just groomed" from "never touched."
+
+The log and any `.claude/context-backups/` are machine-local. If the project uses Git and they aren't ignored yet, suggest adding them to `.gitignore` (don't edit `.gitignore` without asking).
 
 ## Workflow
 
