@@ -25,6 +25,11 @@ Includes the misconfigurations that AI-generated and tutorial-derived code ships
 | SEC-017 | Webhooks verify the provider signature over the raw body and reject stale timestamps | webhook handlers (Stripe, RevenueCat, GitHub…) | P0 | api |
 | SEC-018 | In-app purchases and subscriptions are verified server-side (App Store Server API, Google Play Developer API, or a trusted provider); entitlements are never granted from a client claim | entitlement checks, receipt handling | P0 | pay |
 | SEC-019 | Secrets and tokens never appear in logs, error reports, analytics or URLs (query strings end up in logs and referrers) | logging calls, URL construction | P1 | all |
+| SEC-020 | Passwords are hashed with a current password-hashing function — Argon2id preferred, otherwise scrypt or bcrypt with current cost parameters (OWASP Password Storage Cheat Sheet) — never MD5/SHA-x alone or reversible encryption; or authentication is delegated to a maintained identity provider | password storage code, `createHash(`, `hashlib.sha256(`, `CC_SHA256` near passwords | P0 | api |
+| SEC-021 | Tokens, reset codes, session ids and nonces come from a cryptographically secure generator (`crypto.randomBytes`/`randomUUID`, Python `secrets`, `SecRandomCopyBytes`, `SecureRandom`), never `Math.random`/`random`; reset and OTP codes expire and are single-use | token/code generation | P0 | all |
+| SEC-022 | Cryptography uses vetted libraries and current algorithms (AES-GCM or ChaCha20-Poly1305, TLS 1.2+ with 1.3 preferred); no home-made crypto, no ECB mode, no hard-coded keys or IVs | `createCipheriv`, `CryptoKit`/`CommonCrypto`, `javax.crypto.Cipher`, key literals | P1 | all |
+| SEC-023 | Security-relevant events go to an audit log the actor can't edit (sign-ins and failures, password/email changes, role and permission changes, data exports, admin actions), without secrets or unnecessary personal data | audit log table/service | P2 | api |
+| SEC-024 | Session cookies use `Secure`, `HttpOnly` and `SameSite`; sessions rotate on sign-in, expire on inactivity, and sign-out invalidates the server-side session | cookie and session configuration | P1 | web, api |
 
 ## SUPPLY — dependencies
 
@@ -36,3 +41,37 @@ Includes the misconfigurations that AI-generated and tutorial-derived code ships
 | SUPPLY-004 | Unused dependencies are removed (smaller attack surface and bundle) | `depcheck`/`knip`, imports vs manifest | P3 | all |
 | SUPPLY-005 | Dependency licenses are compatible with how the product is distributed | license checker output | P2 | all |
 | SUPPLY-006 | CI actions and container base images are pinned (version or digest), not `@main`/`latest` | `.github/workflows`, `Dockerfile` | P2 | all |
+
+## Standards mapping
+
+Use this to answer "does the audit cover OWASP?". The mapping is by intent; a full OWASP ASVS (web/API) or MASVS (mobile) verification has more requirements than this catalog.
+
+**OWASP Top 10:2025**
+
+| Category | Checks |
+|---|---|
+| A01 Broken Access Control | AUTH-001, AUTH-002, AUTH-003, AUTH-011, SEC-003, LINK-001, SCALE-009 |
+| A02 Security Misconfiguration | SEC-012, SEC-013, SEC-016, CONF-001, CONF-003, CONF-004, CONF-005, AIGEN-007, NET-015 |
+| A03 Software Supply Chain Failures | SUPPLY-001 … SUPPLY-006 |
+| A04 Cryptographic Failures | SEC-020, SEC-021, SEC-022, SEC-011, AUTH-006, NET-015 |
+| A05 Injection | SEC-005, SEC-006, SEC-009, LLM-003 |
+| A06 Insecure Design | DOMAIN-001 … DOMAIN-003, CONC-008, IDEM-001 … IDEM-004, MONEY-003, TIME-005 |
+| A07 Authentication Failures | AUTH-004 … AUTH-010, AUTH-012, SEC-024 |
+| A08 Software or Data Integrity Failures | SEC-017, SEC-018, SUPPLY-002, SUPPLY-006, CONTRACT-009 |
+| A09 Security Logging and Alerting Failures | SEC-023, SEC-019, OBS-001, OBS-006, ERR-001 |
+| A10 Mishandling of Exceptional Conditions | ERR-001 … ERR-010, NET-001, LIFE-009 |
+
+**OWASP Top 10 for LLM Applications** — LLM-001 … LLM-007, PRIV-010.
+
+**OWASP MASVS (mobile)**
+
+| Group | Checks |
+|---|---|
+| MASVS-STORAGE | AUTH-006, SEC-011, PRIV-005 |
+| MASVS-CRYPTO | SEC-021, SEC-022 |
+| MASVS-AUTH | AUTH-004 … AUTH-011 |
+| MASVS-NETWORK | NET-015 |
+| MASVS-PLATFORM | SEC-007, LINK-001, LINK-010, PUSH-009 |
+| MASVS-CODE | SUPPLY-001 … SUPPLY-003, REL-002, AIGEN-004 |
+| MASVS-RESILIENCE | SEC-018 (anti-tampering and reverse-engineering resistance are otherwise out of scope) |
+| MASVS-PRIVACY | PRIV-001 … PRIV-015 |

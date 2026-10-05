@@ -15,12 +15,12 @@ Then use Read with `offset` = the matched line and a `limit` of about 60.
 | Tiers, requirement levels, conflict rules, additive install | Part A (A1–A4, A3.1) |
 | Non-negotiables (constitution) | Part B — same text as `references/constitution.md` |
 | Architecture, SOLID, patterns, modularity, abstraction | §3–§8 |
-| Domain logic, state machines | §9 |
+| Domain logic, state machines, workflows/sagas | §9 |
 | Database, migrations (expand/contract) | §10 |
 | Data lifecycle, KVKK/GDPR | §11–§12 |
 | i18n, accessibility | §13–§14 |
-| Security, secrets, authN/authZ, multi-tenancy | §15–§17 |
-| Scale, performance, reliability, idempotency | §18–§21 |
+| Security baselines (OWASP ASVS/MASVS), cryptography, secrets, authN/authZ, multi-tenancy | §15–§17 |
+| Scale, performance and resource limits, reliability, idempotency | §18–§21 |
 | External services, API design, errors | §22–§24 |
 | Observability, logging | §25, §31 |
 | Testing, CI, compatibility, versioning | §26–§30 |

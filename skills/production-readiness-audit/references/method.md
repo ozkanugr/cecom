@@ -64,7 +64,8 @@ One JSON object per line, one line per check. `scripts/render_report.py` validat
  "evidence": [{"file": "src/api/client.ts", "line": 12, "note": "axios.create({ baseURL }) — no timeout set"}],
  "searched": ["rg -n \"timeout\" src/"],
  "finding": "The shared axios instance has no timeout; requests can hang until the OS gives up.",
- "fix": {"status": "proposed", "summary": "Set timeout: 15000 on the shared instance; override for uploads.", "files": ["src/api/client.ts:12"]},
+ "fix": {"status": "proposed", "summary": "Set timeout: 15000 on the shared instance; override for uploads.", "files": ["src/api/client.ts:12"],
+         "reference": "axios 1.7 request config docs: timeout (https://axios-http.com/docs/req_config)"},
  "test": ""}
 ```
 
@@ -80,7 +81,7 @@ One JSON object per line, one line per check. `scripts/render_report.py` validat
 | `searched` | list of strings | Exact search commands run |
 | `finding` | string | What is wrong or unknown, in one or two sentences |
 | `reason` | string | Required for NOT_APPLICABLE |
-| `fix` | object | `{"status": "none" \| "proposed" \| "fixed", "summary", "files"}` |
+| `fix` | object | `{"status": "none" \| "proposed" \| "fixed", "summary", "files", "reference"}`; `reference` is required for `proposed` and `fixed` |
 | `test` | string | Required when `fix.status` is `fixed`: the test added or the command run |
 
 ## Running project commands
@@ -94,8 +95,12 @@ Builds, tests and package scripts execute the project's code. Run them only for 
 - Each check file's "Look at" column gives starting points and search terms. They are hints, not limits.
 - Read enough surrounding code to be sure: a `timeout` at one call site doesn't make NET-002 pass if the shared client has none.
 
-## Fix policy (Branch C only)
+## Fix policy
 
+Applies to every proposed fix written in a finding and to every fix applied in Branch C.
+
+- **Current and secure, verified — not remembered.** Each fix uses the approach the official documentation recommends for the versions actually in use (check the lockfile/SDK version), together with current security guidance (OWASP Cheat Sheets, ASVS/MASVS, Apple/Android/framework security docs). Look it up before writing: model knowledge can be outdated. Never use a deprecated API, an outdated algorithm or protocol, or a weaker pattern because it is shorter. If the secure approach needs a dependency upgrade or a breaking change, propose it and ask.
+- **Cite the source** in `fix.reference`: the document and version or standard section the fix follows (e.g. `OWASP Password Storage Cheat Sheet — Argon2id`, `Stripe API docs: idempotent requests`). `render_report.py` rejects proposed or fixed findings without one.
 - Fix in severity order: P0, then P1, then whatever the user picks.
 - One finding per change; smallest safe change; follow existing patterns.
 - Changes that cross the engineering manifesto's agent boundaries (auth/authz, DB schema, dependencies, CI, production configuration, deleting data or tests) need the user's approval first.
@@ -111,6 +116,9 @@ Project profile: <tags>. Tier: <T0–T3>.
 Read references/method.md and the check files for your area(s): <paths>.
 For every check in those files: if its scope doesn't match the profile, write NOT_APPLICABLE with
 reason "profile"; otherwise collect evidence and write exactly one finding.
+A proposed fix must follow the current official docs for the versions in use and cite them in
+fix.reference (see "Fix policy"); if you can't verify the current approach, leave fix.status "none".
+Never copy secret values into findings.
 Do not modify any project file. Write findings as JSON Lines to <scratch path>/findings-<area>.jsonl.
 Return: the file path, counts by status, and the IDs of FAIL and UNCERTAIN findings at P0/P1.
 ```

@@ -151,7 +151,8 @@ class RenderTests(unittest.TestCase):
             "still PENDING": {"id": "NET-007", "status": "PENDING"},
             "invalid status": {"id": "NET-008", "status": "OK"},
             "invalid severity": finding("NET-009", "FAIL", severity="HIGH"),
-            "marked fixed but has no test": finding("NET-010", "FAIL", fix={"status": "fixed", "summary": "x"}),
+            "marked fixed but has no test": finding("NET-010", "FAIL", fix={"status": "fixed", "summary": "x", "reference": "doc"}),
+            "fix needs a reference": finding("NET-013", "FAIL", fix={"status": "proposed", "summary": "add timeout"}),
             "fix.status must be one of": finding("NET-011", "FAIL", fix={"status": "done"}),
             "evidence[0] needs a 'file' or 'cmd'": finding("NET-012", "PASS", evidence=[{"note": "x"}]),
             "unknown check id": finding("NOPE-001", "PASS"),
@@ -176,6 +177,14 @@ class RenderTests(unittest.TestCase):
         redacted = finding("SEC-002", "FAIL", severity="P0",
                            evidence=[{"file": ".env", "line": 3, "note": "live Stripe secret key (sk_l…) committed"}])
         self.assertEqual(self.problems([redacted]), [])
+
+    def test_fix_reference_is_rendered(self):
+        rows = [finding("SEC-020", "FAIL", severity="P0",
+                        fix={"status": "proposed", "summary": "Hash with Argon2id",
+                             "reference": "OWASP Password Storage Cheat Sheet — Argon2id"})]
+        code, _, err = self.run_render(rows)
+        self.assertEqual(code, 0, err)
+        self.assertIn("**Source:** OWASP Password Storage Cheat Sheet — Argon2id", (self.d / "r.md").read_text())
 
     def test_pass_with_search_record_only_is_valid(self):
         row = finding("SEC-002", "PASS", evidence=[], searched=["gitleaks detect --no-banner"])

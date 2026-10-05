@@ -16,6 +16,9 @@ AIGEN covers failure patterns typical of vibe-coded projects regardless of what 
 | AIGEN-008 | Requested permissions and entitlements are actually used (camera, location, contacts, background modes) | Info.plist, AndroidManifest, entitlements vs code | P1 | mobile |
 | AIGEN-009 | Dead code, unused files and exports from earlier iterations are removed | `knip`, `ts-prune`, unused files | P3 | all |
 | AIGEN-010 | Comments and docs don't claim behavior the code doesn't implement ("retries 3 times", "validated server-side") | comments near critical logic vs implementation | P2 | all |
+| AIGEN-011 | The project's agent instructions (`CLAUDE.md`, `AGENTS.md`) exist, state the architecture, conventions and dependency rules, and their commands actually work (run them) | `CLAUDE.md`, `AGENTS.md`, `.cursor/rules` | P3 | all |
+| AIGEN-012 | Significant decisions (stack, auth, data model, external providers) are recorded as ADRs, and the code matches them | `docs/adr/` vs the code | P3 | all |
+| AIGEN-013 | Guardrails don't rely on the agent's word: secrets and destructive commands are denied or need approval, and CI required checks plus branch protection gate merges | `.claude/settings.json`, branch protection, required CI checks | P2 | all |
 
 ## LLM — apps that call language models
 

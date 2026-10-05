@@ -2,7 +2,7 @@
 Tier: {{TIER}}
 Product: TODO — one sentence: what it does, for whom.
 
-Engineering rules: Engineering Manifesto v1.1 (`{{MANIFESTO}}`). Run the kickoff in manifesto §55 before the first feature.
+Engineering rules: Engineering Manifesto v1.2 (`{{MANIFESTO}}`). Run the kickoff in manifesto §55 before the first feature.
 
 ## Commands
 install: TODO

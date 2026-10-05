@@ -1,6 +1,6 @@
 ---
 name: production-readiness-audit
-description: Evidence-based production-readiness audit for AI-generated / vibe-coded apps (mobile, web, backend). Runs ~290 concrete checks across contracts, text/time/money, lifecycle, networking/offline, concurrency/idempotency, performance, auth, security/supply chain, privacy, persistence/migrations, push/deep links, errors/observability, config/release, UI/accessibility, testing, AI-generated code smells and LLM features. Every check ends PASS, FAIL, UNCERTAIN or NOT_APPLICABLE with file:line evidence; failures are then fixed one by one with approval. Use this whenever the user asks to audit, review, harden or bug-hunt an app before release, asks whether code is production ready, wants an edge-case / "what could break" / pre-launch / control-list review of a codebase, or asks about a single risk area across the codebase (offline handling, race conditions, double submits, token refresh, migrations, secrets) — even if they don't say "audit".
+description: Evidence-based production-readiness audit for AI-generated / vibe-coded apps (mobile, web, backend). Runs ~330 concrete checks across architecture/domain, contracts, text/time/money, lifecycle, networking/offline, concurrency/idempotency, performance, scalability, auth, security/supply chain (OWASP-mapped), privacy/KVKK, persistence/migrations, push/deep links, errors/observability, config/release, UI/accessibility, testing, AI-generated code smells and LLM features. Every check ends PASS, FAIL, UNCERTAIN or NOT_APPLICABLE with file:line evidence; failures are then fixed one by one with approval. Use this whenever the user asks to audit, review, harden or bug-hunt an app before release, asks whether code is production ready, wants an edge-case / "what could break" / pre-launch / control-list review of a codebase, or asks about a single risk area across the codebase (offline handling, race conditions, double submits, token refresh, migrations, secrets) — even if they don't say "audit".
 ---
 
 # Production readiness audit
@@ -20,6 +20,7 @@ Pick the branch, run its steps in order, then run **Verify**. `SKILL_DIR` is the
 - **Audit and fix are separate passes.** Never change project code during A, B or D. Fixing while auditing changes the evidence for other checks and produces a diff no one can review.
 - **Never overwrite.** Reports and findings get a new dated file; `render_report.py` refuses to overwrite an existing report.
 - **Never copy secrets into findings.** Cite where a secret is, not its value (at most 4 leading characters); `render_report.py` rejects recognizable keys. A found secret must be rotated — say so. Reports describe weaknesses: suggest the user review them before committing to a public repository.
+- **Fixes are current and secure, with a cited source.** Every proposed or applied fix follows the official documentation for the versions in use and current security guidance (OWASP Cheat Sheets, ASVS/MASVS, platform docs) — looked up, not remembered — with no deprecated APIs or outdated algorithms. Cite it in `fix.reference`; `render_report.py` rejects fixes without one.
 - **Run project commands only when trusted.** Build/test scripts execute the project's code; for code of unknown origin ask first. Never run anything that deploys, migrates shared data, sends messages, or touches production.
 - **Respect the engineering manifesto.** If the project declares `Tier: T0–T3` in `CLAUDE.md`, use it: for T0 suggest a scoped audit (security, config-release, ai-generated); for T2/T3 run the full audit. Fixes that touch auth, DB schema, dependencies, CI or production configuration need the user's approval first.
 
@@ -79,7 +80,7 @@ Same steps as A, with the scope narrowed in step 2:
 1. **Choose.** List the open FAILs by severity and let the user choose; the default order is all P0, then P1.
    **Done when:** the user has confirmed which IDs to fix.
 
-2. **Fix one finding at a time** following "Fix policy" in `references/method.md`: smallest safe change in the existing style; ask first if it crosses a manifesto boundary (auth/authz, schema, dependencies, CI, production config, deleting data or tests); add or update a test that would have caught it, or describe the manual check.
+2. **Fix one finding at a time** following "Fix policy" in `references/method.md`: before writing, look up the current recommended and secure approach for the versions in use and cite it in `fix.reference`; smallest safe change in the existing style; ask first if it crosses a manifesto boundary (auth/authz, schema, dependencies, CI, production config, deleting data or tests); add or update a test that would have caught it, or describe the manual check.
    **Done when:** the change is made and its test or manual check has been run, with the result recorded.
 
 3. **Update the finding** in the findings file: `fix.status` → `fixed`, `fix.files`, `test`. Re-check the item and set `status` to `PASS` only with new evidence.
@@ -105,6 +106,7 @@ The report gains a "Changes since the previous audit" section (fixed, regressed,
 
 | File (`references/checks/`) | Prefixes | Covers |
 |---|---|---|
+| `architecture.md` | ARCH, DOMAIN | Business-logic placement, module boundaries, SDK adapters, DI, state machines, workflows/sagas |
 | `contract.md` | CONTRACT | API/client contracts, nullability, enums, 64-bit IDs, runtime validation, versioning |
 | `text-time-money.md` | I18N, TIME, MONEY | Turkish İ/ı and other locale bugs, Unicode, time zones, clocks, money arithmetic |
 | `lifecycle.md` | LIFE | Background/foreground, process death, cold start, persisted-state upgrades, multiple tabs |
@@ -112,8 +114,9 @@ The report gains a "Changes since the previous audit" section (fixed, regressed,
 | `concurrency.md` | CONC, IDEM | Races, double submit, out-of-order responses, atomic updates, idempotency |
 | `performance.md` | PERF | Images, lists, caches, leaks, main-thread work, N+1 queries, indexes, bundle size |
 | `auth.md` | AUTH | Object-level authorization, token handling and storage, logout/account switch, deletion |
-| `security.md` | SEC, SUPPLY | Client secrets, open DB rules, injection, SSRF, uploads, CORS, webhooks, receipts, dependencies |
-| `privacy.md` | PRIV | Minimization, PII in analytics and crash logs, consent, deletion/export, SDK disclosures |
+| `security.md` | SEC, SUPPLY | Client secrets, open DB rules, injection, SSRF, uploads, CORS, webhooks, receipts, password hashing, crypto, audit log, dependencies; OWASP Top 10:2025 / LLM / MASVS mapping |
+| `privacy.md` | PRIV | Minimization, PII in analytics and crash logs, consent and privacy notices, KVKK/GDPR records and transfers, deletion/export, SDK disclosures |
+| `scalability.md` | SCALE | Stateless servers, queues and dead-letter handling, schedulers, connection pooling, cache invalidation, quotas |
 | `persistence.md` | DATA | Transactions, constraints, migrations, local DB upgrades and corruption, backups |
 | `entry-points.md` | PUSH, LINK | Push tokens and payloads, deep-link validation and routing |
 | `errors-observability.md` | ERR, OBS | Swallowed errors, error UI, crash reporting, correlation ids, alerts |
@@ -151,7 +154,7 @@ Next:       which findings to fix first
 | Path | Purpose |
 |---|---|
 | `references/method.md` | Evidence rules, statuses, severity, scope tags, finding schema, fix policy, subagent brief |
-| `references/checks/*.md` | The check catalog (16 area files, table above) |
+| `references/checks/*.md` | The check catalog (18 area files, table above) |
 | `scripts/detect_profile.sh` | Detects profile tags from manifests and source (A step 1) |
 | `scripts/catalog.py` | Lints the catalog and builds the audit plan (A step 2, Verify) |
 | `scripts/render_report.py` | Validates findings and renders the report, optionally compared with a previous audit (A step 5, D) |

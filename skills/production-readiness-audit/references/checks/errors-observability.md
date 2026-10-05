@@ -30,3 +30,4 @@ When a user says "it doesn't work", can you tell why — from telemetry alone?
 | OBS-007 | Health endpoints distinguish liveness and readiness (dependencies) | `/health`, `/ready` | P2 | api |
 | OBS-008 | Telemetry includes app version, platform and feature-flag state, so production issues can be reproduced | event/global context | P2 | client |
 | OBS-009 | Unusual conditions are visible: retry counts, offline queue size, unexpected state transitions | logs/metrics around retries and state machines | P3 | client |
+| OBS-010 | Requests that cross services, queues or serverless functions are traced end to end (OpenTelemetry or the APM's tracing, with context propagated through queue messages), so one slow or failed request can be followed through every hop | tracing SDK init, propagation headers, message metadata | P2 | api |

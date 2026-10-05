@@ -54,7 +54,7 @@ def texts_of(f):
             out += [e.get("note"), e.get("cmd"), e.get("file")]
     fix = f.get("fix")
     if isinstance(fix, dict):
-        out += [fix.get("summary")] + [x for x in fix.get("files") or [] if isinstance(x, str)]
+        out += [fix.get("summary"), fix.get("reference")] + [x for x in fix.get("files") or [] if isinstance(x, str)]
     return [str(t) for t in out if t]
 FIX_STATUSES = ("none", "proposed", "fixed")
 SEV_RANK = {s: i for i, s in enumerate(SEVERITIES)}
@@ -135,8 +135,11 @@ def validate(findings, catalog, plan=None):
         if fix is not None:
             if not isinstance(fix, dict) or fix.get("status") not in FIX_STATUSES:
                 problems.append(f"{w}: {fid} fix.status must be one of {', '.join(FIX_STATUSES)}")
-            elif fix["status"] == "fixed" and not (f.get("test") or "").strip():
-                problems.append(f"{w}: {fid} is marked fixed but has no test/verification")
+            else:
+                if fix["status"] in ("proposed", "fixed") and not (fix.get("reference") or "").strip():
+                    problems.append(f"{w}: {fid} fix needs a reference: the current official doc or standard it follows")
+                if fix["status"] == "fixed" and not (f.get("test") or "").strip():
+                    problems.append(f"{w}: {fid} is marked fixed but has no test/verification")
     if plan is not None:
         missing = [p["id"] for p in plan if p.get("id") not in seen]
         if missing:
@@ -288,6 +291,9 @@ def render(findings, catalog, meta, previous=None):
             files = ", ".join(f"`{x}`" for x in fix.get("files") or [])
             w(f"**Fix ({fix['status']}):** {fix.get('summary', '')}" + (f" — {files}" if files else ""))
             w("")
+            if fix.get("reference"):
+                w(f"**Source:** {fix['reference']}")
+                w("")
         if f.get("test"):
             w(f"**Test:** {f['test']}")
             w("")

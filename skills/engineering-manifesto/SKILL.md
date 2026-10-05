@@ -1,6 +1,6 @@
 ---
 name: engineering-manifesto
-description: Applies the user's Engineering Manifesto (v1.1) to Claude Code projects — project kickoff (tier T0–T3, kickoff questions, ADRs, project CLAUDE.md, permission rules) and an additive installer that never overwrites an existing CLAUDE.md, settings.json or ADRs. Use this whenever the user starts or sets up a new project or repo (in any language, e.g. "new project", "kickoff", "set up this repo"), asks to create or extend a project CLAUDE.md, ADRs or engineering rules, wants to apply/install the manifesto to a project, or asks which engineering rules apply to a design, database schema, security, KVKK/GDPR privacy, API, reliability or code-review decision — even if the manifesto is not named.
+description: Applies the user's Engineering Manifesto (v1.2) to Claude Code projects — project kickoff (tier T0–T3, kickoff questions, ADRs, project CLAUDE.md, permission rules) and an additive installer that never overwrites an existing CLAUDE.md, settings.json or ADRs. Use this whenever the user starts or sets up a new project or repo (in any language, e.g. "new project", "kickoff", "set up this repo"), asks to create or extend a project CLAUDE.md, ADRs or engineering rules, wants to apply/install the manifesto to a project, or asks which engineering rules apply to a design, database schema, security, KVKK/GDPR privacy, API, reliability or code-review decision — even if the manifesto is not named.
 ---
 
 # Engineering Manifesto

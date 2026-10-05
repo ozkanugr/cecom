@@ -1,4 +1,4 @@
-# Engineering constitution (Engineering Manifesto v1.1 — Part B)
+# Engineering constitution (Engineering Manifesto v1.2 — Part B)
 
 Full reference: `~/.claude/engineering/manifesto.md` (same file as the engineering-manifesto skill's `references/manifesto.md`, cecom plugin). Read the relevant sections on demand for design, schema, security, privacy, API, or review work. Do not load it all by default.
 
@@ -23,6 +23,7 @@ Each project declares `Tier: T0|T1|T2|T3` in its `CLAUDE.md` (T0 prototype, T1 i
 11. Every schema change has a migration and rollback strategy.
 12. Retries require idempotency analysis.
 13. Never overwrite an existing `CLAUDE.md`, settings file, ADR, or doc wholesale. Extend additively; managed content goes between `engineering-manifesto:begin/end` markers.
+14. Implement fixes and new code with the current, secure approach for the versions in use: look it up in the official documentation and current security guidance (OWASP Cheat Sheets, ASVS/MASVS, platform security docs) rather than relying on memory; never use deprecated APIs, outdated algorithms or protocols, or a weaker pattern because it is shorter; if the secure approach needs an upgrade or breaking change, propose it and ask; cite the source for security-relevant changes.
 
 ## Stop and ask only when
 - The change crosses a boundary in MUST 10.

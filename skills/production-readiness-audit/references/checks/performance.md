@@ -17,3 +17,6 @@
 | PERF-013 | Web: bundle size within budget; routes/heavy components code-split; no large dependency for a small feature | bundler config, `import` of heavy libs, build output | P2 | web |
 | PERF-014 | Web/React: no re-render storms from unstable props/context values or effects that set state every render | context providers, memoization, effect deps | P3 | web |
 | PERF-015 | Startup does only what the first screen needs; analytics/SDK init and prefetching are deferred | app bootstrap, `didFinishLaunching`, `Application.onCreate` | P2 | client |
+| PERF-016 | Numeric performance budgets exist (e.g. p95 API latency, LCP/INP, bundle size, app launch time) and the key ones are measured automatically (Lighthouse CI, `size-limit`, XCTest/Macrobenchmark metrics, APM alerts) | budgets in `CLAUDE.md`, CI config | P2 | all |
+| PERF-017 | Static assets are compressed (Brotli or gzip), content-hashed and served with long-lived cache headers through a CDN; images use modern formats (AVIF/WebP) and fonts are subset | build and hosting config, response headers | P2 | web |
+| PERF-018 | The server enforces resource limits: maximum request body and upload size, request/handler timeouts, pagination caps, worker concurrency, and container memory/CPU limits | body-parser limits, server timeouts, Dockerfile/Kubernetes resources, serverless limits | P1 | api |

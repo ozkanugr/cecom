@@ -22,7 +22,7 @@ STABLE_DIR="${HOME}/.claude/engineering"
 STABLE_CONSTITUTION="${STABLE_DIR}/constitution.md"
 STABLE_MANIFESTO="${STABLE_DIR}/manifesto.md"
 BACKUP_DIR="${STABLE_DIR}/backups"
-VERSION="1.1"
+VERSION="1.2"
 
 # Paths written into CLAUDE.md files use ~ so they work for any user with the skill installed.
 # sed_repl <text> — escape text for use as a sed replacement with | as the delimiter

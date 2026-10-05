@@ -39,3 +39,6 @@ For each scenario, record `PASS` when an automated test covers it (cite the test
 | TQ-004 | Mocks don't replace the unit under test, and tests don't special-case production code (`if (process.env.NODE_ENV === "test")` in business logic) | test doubles, env checks in src | P1 | all |
 | TQ-005 | Tests run in CI and the suite passes now (run it; report the real output) | CI config; run the test command | P1 | all |
 | TQ-006 | Tests are deterministic: no real network, real time, or ordering dependence without control | `sleep`, `Date.now()`, live URLs in tests | P2 | all |
+| TQ-007 | Integration tests exercise real dependencies where it matters (database via Testcontainers or a test instance, the real HTTP layer), not only mocks | integration test setup | P1 | api, db |
+| TQ-008 | Critical user journeys (sign up, sign in, core action, payment) have end-to-end tests (Playwright, Cypress, XCUITest, Espresso, Maestro, Detox) that run in CI or before every release | e2e directories, CI jobs | P1 | client |
+| TQ-009 | Bug fixes come with a regression test that fails without the fix | recent `fix:` commits vs their test changes (`git log --stat`) | P2 | all |
