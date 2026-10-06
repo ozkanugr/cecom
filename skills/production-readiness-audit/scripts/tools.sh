@@ -71,6 +71,12 @@ cmd_needed() {
   has package-lock.json pnpm-lock.yaml yarn.lock bun.lock requirements.txt poetry.lock uv.lock Pipfile.lock pdm.lock \
       pubspec.lock go.mod Cargo.lock gradle.lockfile pom.xml Gemfile.lock composer.lock && osv=1
   [ "$osv" -eq 1 ] && row osv-scanner "known-vulnerable dependencies (SUPPLY-003)"
+  if [ "$js" -eq 1 ] || has tsconfig.json; then
+    printf 'eslint\ton-demand\t-\tESLint (Next.js config for Next apps, typescript-eslint for TS): AIGEN-003/004, CONC-002/006, PERF-002, A11Y-010 — see js_checks.sh plan\n'
+  fi
+  if has tsconfig.json; then
+    printf 'tsc\ton-demand\t-\tproject'"'"'s own TypeScript type check (AIGEN-003, AIGEN-014) — js_checks.sh typecheck; UNCERTAIN without node_modules\n'
+  fi
   if [ "$js" -eq 1 ]; then
     row npm "npm audit for JS dependencies (SUPPLY-003)"
     ephemeral dependency-cruiser "circular deps and layers, JS/TS (ARCH-003/006): npx --yes dependency-cruiser@<ver>"

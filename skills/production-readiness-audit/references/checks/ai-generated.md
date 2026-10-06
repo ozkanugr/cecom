@@ -19,6 +19,7 @@ AIGEN covers failure patterns typical of vibe-coded projects regardless of what 
 | AIGEN-011 | The project's agent instructions (`CLAUDE.md`, `AGENTS.md`) exist, state the architecture, conventions and dependency rules, and their commands actually work (run them) | `CLAUDE.md`, `AGENTS.md`, `.cursor/rules` | P3 | all |
 | AIGEN-012 | Significant decisions (stack, auth, data model, external providers) are recorded as ADRs, and the code matches them | `docs/adr/` vs the code | P3 | all |
 | AIGEN-013 | Guardrails don't rely on the agent's word: secrets and destructive commands are denied or need approval, and CI required checks plus branch protection gate merges | `.claude/settings.json`, branch protection, required CI checks | P2 | all |
+| AIGEN-014 | TypeScript projects compile with `"strict": true` (null checks, no implicit `any`), and new code doesn't loosen it per file; JS-only projects with type checking via JSDoc keep `checkJs` on | `tsconfig.json` (`strict`, `noImplicitAny`, `strictNullChecks`), `// @ts-nocheck`, `skipLibCheck` misuse | P2 | all |
 
 ## LLM — apps that call language models
 

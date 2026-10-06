@@ -317,6 +317,44 @@ class EvalFixtureTests(unittest.TestCase):
         self.assertTrue(r["S3"]["flagged"])
 
 
+class JsChecksTests(unittest.TestCase):
+    SCRIPT = SCRIPTS / "js_checks.sh"
+
+    def plan(self, files):
+        with tempfile.TemporaryDirectory() as d, tempfile.TemporaryDirectory() as cache:
+            for rel, content in files.items():
+                p = Path(d, rel)
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_text(content, encoding="utf-8")
+                if rel.endswith("/.bin/eslint") or rel.endswith("/.bin/tsc"):
+                    p.chmod(0o755)
+            env = {**__import__("os").environ, "CECOM_CACHE": cache}
+            res = subprocess.run(["/bin/bash", str(self.SCRIPT), "plan", d], capture_output=True, text=True, env=env)
+        self.assertEqual(res.returncode, 0, res.stderr)
+        return res.stdout
+
+    def test_next_app_without_eslint_uses_next_sandbox(self):
+        out = self.plan({"package.json": '{"dependencies": {"next": "16.0.0"}}', "tsconfig.json": "{}"})
+        self.assertIn("lint: sandbox-next", out)
+        self.assertIn("prepare next", out)
+        self.assertIn("typecheck: uncertain", out)
+
+    def test_project_with_own_eslint_uses_project_mode(self):
+        out = self.plan({"package.json": '{"devDependencies": {"eslint": "9.0.0", "next": "16.0.0"}}',
+                         "eslint.config.mjs": "export default []", "node_modules/.bin/eslint": "#!/bin/sh\n",
+                         "tsconfig.json": "{}", "node_modules/.bin/tsc": "#!/bin/sh\necho Version 6.0.3\n"})
+        self.assertIn("lint: project", out)
+        self.assertIn("typecheck: project", out)
+
+    def test_plain_ts_and_plain_js(self):
+        self.assertIn("lint: sandbox-ts", self.plan({"tsconfig.json": "{}"}))
+        self.assertIn("lint: none", self.plan({"package.json": "{}"}))
+
+    def test_prepare_rejects_unknown_kind(self):
+        res = subprocess.run(["/bin/bash", str(self.SCRIPT), "prepare", "java"], capture_output=True, text=True)
+        self.assertEqual(res.returncode, 2)
+
+
 class ToolsTests(unittest.TestCase):
     SCRIPT = SCRIPTS / "tools.sh"
 

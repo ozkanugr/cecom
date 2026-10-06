@@ -35,6 +35,7 @@ Pick the branch, run its steps in order, then run **Verify**. `SKILL_DIR` is the
    ```bash
    bash SKILL_DIR/scripts/tools.sh needed <project-dir>
    ```
+   For JS/TS projects also run `bash SKILL_DIR/scripts/js_checks.sh plan <project-dir>`: it says whether ESLint runs with the project's own config or a sandboxed Next.js/typescript-eslint config, and whether a type check is possible.
    No tool ships with the plugin. For missing ones, ask the user before installing (`tools.sh install <tool>…` uses official Homebrew formulae; npm/PyPI tools run pinned and ephemeral). Rules and versions: `references/tools.md`. If the user declines, the related checks rely on manual search or become `UNCERTAIN`.
    **Done when:** the user has confirmed the profile tags and the tool installs (or declined them), and you know the tier (or that none is declared) and the output path.
 
@@ -166,6 +167,7 @@ Next:       which findings to fix first
 | `references/method.md` | Evidence rules, statuses, severity, scope tags, finding schema, fix policy, subagent brief |
 | `references/checks/*.md` | The check catalog (18 area files, table above) |
 | `references/tools.md` | Tools the audit runs: versions, install/verification rules, known gaps, and the iGoat-Swift test target |
+| `scripts/js_checks.sh` | ESLint (Next.js / typescript-eslint config, or the project's own) and `tsc` for JS/TS projects; sandboxed, compatible-version installs (A step 3) |
 | `scripts/tools.sh` | Lists the tools a project needs and which are missing; installs approved ones via Homebrew (A step 1) |
 | `scripts/eval_fixture.py` | Scores an audit of a known-vulnerable fixture against its expected findings (Verify step 4) |
 | `evals/igoat-swift/expected.json` | Expected findings for OWASP iGoat-Swift, written before any audit run |
