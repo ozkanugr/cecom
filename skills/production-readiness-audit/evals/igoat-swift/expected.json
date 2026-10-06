@@ -1,0 +1,273 @@
+{
+  "fixture": "OWASP/iGoat-Swift",
+  "commit": "8c8a8ed",
+  "profile": "mobile,api,db",
+  "note": "Ground truth written from iGoat's documented exercises before running the audit. An item is detected when at least one of its checks is FAIL. Corrections after the first run are recorded per item in 'correction' (date, previous value, reason); the first run's pre-registered score is kept in 'history'.",
+  "items": [
+    {
+      "exercise": "NSUserDefaults",
+      "path": "Exercises/InsecureLocalDataStorage/NSUserDefaults",
+      "expect_fail_any": [
+        "SEC-011",
+        "AUTH-006"
+      ]
+    },
+    {
+      "exercise": "Plist storage",
+      "path": "Exercises/InsecureLocalDataStorage/PlistStorage",
+      "expect_fail_any": [
+        "SEC-011",
+        "SEC-001"
+      ]
+    },
+    {
+      "exercise": "Core Data",
+      "path": "Exercises/InsecureLocalDataStorage/CoreData",
+      "expect_fail_any": [
+        "SEC-011"
+      ]
+    },
+    {
+      "exercise": "Realm",
+      "path": "Exercises/InsecureLocalDataStorage/Realm",
+      "expect_fail_any": [
+        "SEC-011"
+      ]
+    },
+    {
+      "exercise": "Couchbase Lite",
+      "path": "Exercises/InsecureLocalDataStorage/CouchBase",
+      "expect_fail_any": [
+        "SEC-011"
+      ]
+    },
+    {
+      "exercise": "YapDatabase",
+      "path": "Exercises/InsecureLocalDataStorage/Yap",
+      "expect_fail_any": [
+        "SEC-011"
+      ]
+    },
+    {
+      "exercise": "Binary cookies",
+      "path": "Exercises/InsecureLocalDataStorage/BinaryCookies",
+      "expect_fail_any": [
+        "SEC-011",
+        "AUTH-006"
+      ]
+    },
+    {
+      "exercise": "WebKit cache",
+      "path": "Exercises/InsecureLocalDataStorage/WebKit Cache",
+      "expect_fail_any": [
+        "SEC-011"
+      ]
+    },
+    {
+      "exercise": "Keychain usage",
+      "path": [
+        "Exercises/InsecureLocalDataStorage/Keychain"
+      ],
+      "expect_fail_any": [
+        "SEC-011",
+        "SEC-028"
+      ],
+      "correction": {
+        "date": "2026-10-06",
+        "before": {
+          "path": "Exercises/InsecureLocalDataStorage/KeychainUsage",
+          "expect_fail_any": [
+            "SEC-028",
+            "SEC-011"
+          ]
+        },
+        "reason": "KeychainUsage/ holds only KeychainDumper.swift, which is not in a build target; the keychain exercise lives in KeychainAnalyze/."
+      }
+    },
+    {
+      "exercise": "Hard-coded keys",
+      "path": "Exercises/Key Management/Hard Coded Keys",
+      "expect_fail_any": [
+        "SEC-001",
+        "SEC-022"
+      ]
+    },
+    {
+      "exercise": "Random key generation",
+      "path": "Exercises/Key Management/Random Key Generation",
+      "expect_fail_any": [
+        "SEC-021",
+        "SEC-022"
+      ]
+    },
+    {
+      "exercise": "Key storage (server side)",
+      "path": [
+        "Exercises/Key Management/Key Storage Server Side",
+        "myapp/cryptoKey.php"
+      ],
+      "expect_fail_any": [
+        "AUTH-002",
+        "NET-015",
+        "SEC-001",
+        "SEC-011",
+        "SEC-022"
+      ],
+      "correction": {
+        "date": "2026-10-06",
+        "before": {
+          "path": "Exercises/Key Management/Key Storage Server Side",
+          "expect_fail_any": [
+            "SEC-001",
+            "SEC-011",
+            "SEC-022"
+          ]
+        },
+        "reason": "The weakness is the key being served for a constant token over plain HTTP; that is NET-015 and AUTH-002, not only crypto checks."
+      }
+    },
+    {
+      "exercise": "Broken cryptography",
+      "path": [
+        "Exercises/Broken Cryptography",
+        "myapp/checkout.php"
+      ],
+      "expect_fail_any": [
+        "SEC-022"
+      ],
+      "correction": {
+        "date": "2026-10-06",
+        "before": {
+          "path": "Exercises/Broken Cryptography",
+          "expect_fail_any": [
+            "SEC-022"
+          ]
+        },
+        "reason": "The flaw (secret-prefix SHA-256, open to length extension) is in the server's checkout.php, not in the client screen."
+      }
+    },
+    {
+      "exercise": "SQL injection",
+      "path": "Exercises/Injection Flaws/SQL Injection",
+      "expect_fail_any": [
+        "SEC-005"
+      ]
+    },
+    {
+      "exercise": "XSS in a web view",
+      "path": "Exercises/Injection Flaws/XSS",
+      "expect_fail_any": [
+        "SEC-006",
+        "SEC-007"
+      ]
+    },
+    {
+      "exercise": "URL scheme",
+      "path": "Exercises/URL Scheme",
+      "expect_fail_any": [
+        "LINK-001",
+        "LINK-010"
+      ]
+    },
+    {
+      "exercise": "Server communication",
+      "path": "Exercises/Server Communication",
+      "expect_fail_any": [
+        "NET-015"
+      ]
+    },
+    {
+      "exercise": "Remote authentication",
+      "path": "Exercises/Authentication/Remote",
+      "expect_fail_any": [
+        "AUTH-002",
+        "AUTH-004",
+        "NET-015",
+        "SEC-019"
+      ]
+    },
+    {
+      "exercise": "Device logs",
+      "path": "Exercises/SideChannelDataLeaks/DeviceLogs",
+      "expect_fail_any": [
+        "SEC-019"
+      ]
+    },
+    {
+      "exercise": "Cut and paste",
+      "path": "Exercises/SideChannelDataLeaks/CutNPaste",
+      "expect_fail_any": [
+        "SEC-026"
+      ]
+    },
+    {
+      "exercise": "Keystroke logging (keyboard cache)",
+      "path": "Exercises/SideChannelDataLeaks/KeyStroke",
+      "expect_fail_any": [
+        "SEC-027"
+      ]
+    },
+    {
+      "exercise": "Backgrounding (app-switcher snapshot)",
+      "path": "Exercises/SideChannelDataLeaks/Backgrounding",
+      "expect_fail_any": [
+        "SEC-025"
+      ]
+    },
+    {
+      "exercise": "Cloud misconfiguration",
+      "path": "Exercises/SideChannelDataLeaks/CloudMisconfiguration",
+      "expect_fail_any": [
+        "SEC-003",
+        "SEC-001"
+      ],
+      "note": "The bucket policy is not in the repository; a source-only audit can at best flag it UNCERTAIN at the right place."
+    },
+    {
+      "exercise": "Committed server private keys",
+      "path": "server/*.private.key",
+      "expect_fail_any": [
+        "SEC-002"
+      ]
+    }
+  ],
+  "out_of_scope": [
+    {
+      "exercise": "Binary patching",
+      "reason": "MASVS-RESILIENCE: needs binary analysis"
+    },
+    {
+      "exercise": "Tampering",
+      "reason": "MASVS-RESILIENCE: needs binary analysis"
+    },
+    {
+      "exercise": "Reverse engineering",
+      "reason": "MASVS-RESILIENCE: needs binary analysis"
+    },
+    {
+      "exercise": "Runtime challenge",
+      "reason": "MASVS-RESILIENCE: runtime manipulation"
+    },
+    {
+      "exercise": "Brute-force attack (runtime)",
+      "reason": "runtime manipulation of a local check; no source-level check in the catalog"
+    },
+    {
+      "exercise": "Memory management",
+      "reason": "sensitive data lingering in memory; needs runtime analysis"
+    },
+    {
+      "exercise": "Social engineering",
+      "reason": "not a code property"
+    }
+  ],
+  "history": [
+    {
+      "date": "2026-10-06",
+      "catalog": "331 checks",
+      "detected": "24/24",
+      "located": "20/24",
+      "note": "pre-registered ground truth"
+    }
+  ]
+}

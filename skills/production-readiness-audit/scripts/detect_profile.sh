@@ -21,7 +21,7 @@ add() { # add <tag> <reason>
 
 # Dependency manifests (root and one level down, e.g. ios/Podfile, app/build.gradle).
 MANIFESTS=""
-for f in package.json */package.json pubspec.yaml Podfile ios/Podfile Package.swift \
+for f in package.json */package.json pubspec.yaml Podfile */Podfile Podfile.lock */Podfile.lock Package.swift \
          build.gradle build.gradle.kts app/build.gradle app/build.gradle.kts android/app/build.gradle \
          requirements.txt pyproject.toml Pipfile go.mod Gemfile composer.json Cargo.toml; do
   case "$f" in node_modules/*) continue ;; esac
@@ -39,6 +39,16 @@ any_exists() { # any_exists <glob...> → true if at least one pattern matches a
   return 1
 }
 
+find_named() { # find_named <name-pattern...> → true if a file/dir with that name exists within 4 levels
+  for n in "$@"; do
+    if find . -maxdepth 4 \( -path '*/node_modules' -o -path '*/.git' -o -path '*/Pods' -o -path '*/build' \) -prune \
+         -o -name "$n" -print 2>/dev/null | grep -q .; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 src_has() { # src_has <extended-regex> <glob...> → true if any source file matches
   local re="$1"; shift
   local inc=""
@@ -50,8 +60,8 @@ src_has() { # src_has <extended-regex> <glob...> → true if any source file mat
 }
 
 # --- mobile
-if any_exists ./*.xcodeproj ./*.xcworkspace ios/*.xcodeproj; then add mobile "Xcode project"
-elif [ -f android/app/src/main/AndroidManifest.xml ] || [ -f app/src/main/AndroidManifest.xml ]; then add mobile "Android app module"
+if find_named '*.xcodeproj' '*.xcworkspace'; then add mobile "Xcode project"
+elif find_named AndroidManifest.xml; then add mobile "Android app module"
 elif [ -f pubspec.yaml ] && grep -qs 'flutter' pubspec.yaml; then add mobile "Flutter (pubspec.yaml)"
 elif dep '"(react-native|expo)"'; then add mobile "React Native / Expo dependency"
 elif [ -f Package.swift ] && grep -qsE '\.iOS|\.macOS|\.watchOS|\.visionOS' Package.swift; then add mobile "Swift package for Apple platforms"
@@ -80,7 +90,7 @@ if dep '"(prisma|@prisma/client|drizzle-orm|typeorm|sequelize|mongoose|mongodb|k
   add db "database/ORM dependency"
 elif [ -d migrations ] || [ -d prisma ] || [ -d supabase/migrations ] || [ -d db/migrate ]; then
   add db "migrations directory"
-elif any_exists ./*.xcdatamodeld ./*/*.xcdatamodeld || src_has 'import SwiftData|@Model' '*.swift'; then
+elif find_named '*.xcdatamodeld' || src_has 'import SwiftData|@Model' '*.swift'; then
   add db "Core Data / SwiftData model"
 fi
 

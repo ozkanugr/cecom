@@ -1,6 +1,6 @@
 ---
 name: production-readiness-audit
-description: Evidence-based production-readiness audit for AI-generated / vibe-coded apps (mobile, web, backend). Runs ~330 concrete checks across architecture/domain, contracts, text/time/money, lifecycle, networking/offline, concurrency/idempotency, performance, scalability, auth, security/supply chain (OWASP-mapped), privacy/KVKK, persistence/migrations, push/deep links, errors/observability, config/release, UI/accessibility, testing, AI-generated code smells and LLM features. Every check ends PASS, FAIL, UNCERTAIN or NOT_APPLICABLE with file:line evidence; failures are then fixed one by one with approval. Use this whenever the user asks to audit, review, harden or bug-hunt an app before release, asks whether code is production ready, wants an edge-case / "what could break" / pre-launch / control-list review of a codebase, or asks about a single risk area across the codebase (offline handling, race conditions, double submits, token refresh, migrations, secrets) — even if they don't say "audit".
+description: Evidence-based production-readiness audit for AI-generated / vibe-coded apps (mobile, web, backend). Runs 330+ concrete checks across architecture/domain, contracts, text/time/money, lifecycle, networking/offline, concurrency/idempotency, performance, scalability, auth, security/supply chain (OWASP-mapped), privacy/KVKK, persistence/migrations, push/deep links, errors/observability, config/release, UI/accessibility, testing, AI-generated code smells and LLM features. Every check ends PASS, FAIL, UNCERTAIN or NOT_APPLICABLE with file:line evidence; failures are then fixed one by one with approval. Use this whenever the user asks to audit, review, harden or bug-hunt an app before release, asks whether code is production ready, wants an edge-case / "what could break" / pre-launch / control-list review of a codebase, or asks about a single risk area across the codebase (offline handling, race conditions, double submits, token refresh, migrations, secrets) — even if they don't say "audit".
 ---
 
 # Production readiness audit
@@ -31,7 +31,12 @@ Pick the branch, run its steps in order, then run **Verify**. `SKILL_DIR` is the
    bash SKILL_DIR/scripts/detect_profile.sh <project-dir>
    ```
    Show the detected tags (`mobile web api db push pay llm`) with their reasons, the tier from `CLAUDE.md` if any, and the output location (default `docs/audits/<YYYY-MM-DD>-production-readiness.md` plus `.jsonl`). Ask the user to confirm or correct the tags — detection is heuristic.
-   **Done when:** the user has confirmed the profile tags, and you know the tier (or that none is declared) and the output path.
+   Then list the tools this project's audit can use:
+   ```bash
+   bash SKILL_DIR/scripts/tools.sh needed <project-dir>
+   ```
+   No tool ships with the plugin. For missing ones, ask the user before installing (`tools.sh install <tool>…` uses official Homebrew formulae; npm/PyPI tools run pinned and ephemeral). Rules and versions: `references/tools.md`. If the user declines, the related checks rely on manual search or become `UNCERTAIN`.
+   **Done when:** the user has confirmed the profile tags and the tool installs (or declined them), and you know the tier (or that none is declared) and the output path.
 
 2. **Plan.**
    ```bash
@@ -137,6 +142,11 @@ The report gains a "Changes since the previous audit" section (fixed, regressed,
    python3 -m unittest discover -s SKILL_DIR/scripts/tests
    ```
    **Done when:** lint prints `ok` and the tests end with `OK`.
+4. If you changed checks or the method in a way that affects mobile security, re-run the audit on OWASP iGoat-Swift (clone on demand into `~/.cache/cecom/fixtures/`, never into the plugin) and score it:
+   ```bash
+   python3 SKILL_DIR/scripts/eval_fixture.py <findings.jsonl> SKILL_DIR/evals/igoat-swift/expected.json
+   ```
+   **Done when:** located recall is at least what the previous run reached.
 
 ## Chat summary format
 
@@ -155,6 +165,10 @@ Next:       which findings to fix first
 |---|---|
 | `references/method.md` | Evidence rules, statuses, severity, scope tags, finding schema, fix policy, subagent brief |
 | `references/checks/*.md` | The check catalog (18 area files, table above) |
+| `references/tools.md` | Tools the audit runs: versions, install/verification rules, known gaps, and the iGoat-Swift test target |
+| `scripts/tools.sh` | Lists the tools a project needs and which are missing; installs approved ones via Homebrew (A step 1) |
+| `scripts/eval_fixture.py` | Scores an audit of a known-vulnerable fixture against its expected findings (Verify step 4) |
+| `evals/igoat-swift/expected.json` | Expected findings for OWASP iGoat-Swift, written before any audit run |
 | `scripts/detect_profile.sh` | Detects profile tags from manifests and source (A step 1) |
 | `scripts/catalog.py` | Lints the catalog and builds the audit plan (A step 2, Verify) |
 | `scripts/render_report.py` | Validates findings and renders the report, optionally compared with a previous audit (A step 5, D) |

@@ -8,7 +8,7 @@ Structural problems become production bugs: logic in the wrong layer gets copied
 |---|---|---|---|---|
 | ARCH-001 | Business rules live in domain/service code — not in UI components, controllers/route handlers, or queries scattered across files | pricing, discount, permission and eligibility logic in components or fat handlers | P2 | all |
 | ARCH-002 | Each module has one clear responsibility and a public interface; modules don't import each other's internals | deep relative imports into another module's internals, bypassed index/barrel files | P3 | all |
-| ARCH-003 | No circular dependencies between modules or packages | `madge --circular`, `dependency-cruiser`, `import-linter`, Xcode/Gradle module graph | P2 | all |
+| ARCH-003 | No circular dependencies between modules or packages | `dependency-cruiser`, `import-linter`, Xcode/Gradle module graph | P2 | all |
 | ARCH-004 | Third-party SDKs (payments, analytics, AI, storage, auth, email, push) sit behind an internal interface/adapter instead of being called from many places | SDK imports across the codebase | P2 | all |
 | ARCH-005 | Dependencies are injected (constructor/parameters/DI container/environment) and replaceable in tests; business logic doesn't reach databases or networks through hidden singletons | `shared`/static clients used inside domain code | P2 | all |
 | ARCH-006 | Dependency direction is respected (UI → application → domain ← infrastructure): domain code imports no UI, HTTP or ORM framework types | imports in domain/service folders | P3 | all |

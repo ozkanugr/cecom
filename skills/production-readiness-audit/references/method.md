@@ -5,7 +5,7 @@ Read this before collecting evidence. Subagents get this file verbatim.
 ## Principles
 
 1. **Don't assume — inspect.** A check's status comes from code you opened, commands you ran, or configuration you read. "The code looks clean" is not evidence.
-2. **Every status carries evidence.** Cite `file:line` and quote the decisive line(s), or cite the command you ran and its output.
+2. **Every status carries evidence.** Cite `file:line` and quote the decisive line(s), or cite the command you ran and its output. For a `FAIL`, list **every** affected location (up to about 20; then say how many more), not only the first — each one needs fixing, and a single example hides the rest.
 3. **Absence needs a search record.** A claim like "no request has a timeout" or "no secrets are committed" is only as good as the search behind it. List the exact searches in `searched` (e.g. `rg -n "timeout" src/`). If you can't search thoroughly enough to be confident, the status is `UNCERTAIN`.
 4. **Runtime behavior is not static evidence.** Many lifecycle, memory and UI checks depend on what happens on a device. Static evidence is the code path that handles the scenario (e.g. an `onSaveInstanceState` that persists the draft). If correctness can only be shown by running the app, mark `UNCERTAIN` and name, in `finding`, the runtime scenario that would settle it; it feeds the test plan.
 5. **Platform defaults count only when cited.** "React Query retries 3 times by default" is evidence only together with the version in the lockfile and the config line that leaves the default in place.
@@ -86,6 +86,8 @@ One JSON object per line, one line per check. `scripts/render_report.py` validat
 
 ## Running project commands
 
+Tools the audit itself runs (secret scanners, dependency scanners, static analyzers) and how to install, verify and run them are listed in `references/tools.md`. Ask before downloading any of them.
+
 Builds, tests and package scripts execute the project's code. Run them only for a repository the user trusts and has asked you to audit; for code of unknown origin, ask first or limit yourself to static reading. Never run commands that deploy, migrate a shared database, send messages, or touch production.
 
 ## Searching efficiently
@@ -117,7 +119,9 @@ Read references/method.md and the check files for your area(s): <paths>.
 For every check in those files: if its scope doesn't match the profile, write NOT_APPLICABLE with
 reason "profile"; otherwise collect evidence and write exactly one finding.
 A proposed fix must follow the current official docs for the versions in use and cite them in
-fix.reference (see "Fix policy"); if you can't verify the current approach, leave fix.status "none".
+fix.reference (see "Fix policy"). You may read official documentation online (vendor and standards
+sites such as developer.apple.com, developer.android.com, OWASP, MDN, the library's own docs) to
+verify it — no other network use. If you can't verify the current approach, leave fix.status "none".
 Never copy secret values into findings.
 Do not modify any project file. Write findings as JSON Lines to <scratch path>/findings-<area>.jsonl.
 Return: the file path, counts by status, and the IDs of FAIL and UNCERTAIN findings at P0/P1.

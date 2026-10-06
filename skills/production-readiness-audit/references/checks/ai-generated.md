@@ -14,7 +14,7 @@ AIGEN covers failure patterns typical of vibe-coded projects regardless of what 
 | AIGEN-006 | One implementation per concept: not two API clients, two auth helpers, two date utilities, or three state-management approaches drifting apart | duplicate modules with similar names | P2 | all |
 | AIGEN-007 | Copied tutorial configuration is gone: example keys, default passwords, `allow all` rules, `cors({ origin: "*" })`, sample bundle ids | config files, rules files | P0 | all |
 | AIGEN-008 | Requested permissions and entitlements are actually used (camera, location, contacts, background modes) | Info.plist, AndroidManifest, entitlements vs code | P1 | mobile |
-| AIGEN-009 | Dead code, unused files and exports from earlier iterations are removed | `knip`, `ts-prune`, unused files | P3 | all |
+| AIGEN-009 | Dead code, unused files and exports from earlier iterations are removed | `knip`, unused files | P3 | all |
 | AIGEN-010 | Comments and docs don't claim behavior the code doesn't implement ("retries 3 times", "validated server-side") | comments near critical logic vs implementation | P2 | all |
 | AIGEN-011 | The project's agent instructions (`CLAUDE.md`, `AGENTS.md`) exist, state the architecture, conventions and dependency rules, and their commands actually work (run them) | `CLAUDE.md`, `AGENTS.md`, `.cursor/rules` | P3 | all |
 | AIGEN-012 | Significant decisions (stack, auth, data model, external providers) are recorded as ADRs, and the code matches them | `docs/adr/` vs the code | P3 | all |

@@ -5,7 +5,7 @@ Personal engineering toolkit. Replaces the `context-gardener` plugin (v0.1.0) an
 | Skill | What it does | How to invoke |
 |---|---|---|
 | **engineering-manifesto** | New-project kickoff (tier T0–T3, kickoff questions, ADRs, project CLAUDE.md, permission rules) and applying the manifesto to existing projects **without overwriting anything**. During design and review, finds and applies the relevant manifesto sections. | `/kickoff`, "we're starting a new project", "apply the manifesto to this project" |
-| **production-readiness-audit** | Evidence-based audit of AI-generated / vibe-coded apps: ~330 checks across 18 areas (architecture and domain, contracts, locale/time/money, lifecycle, networking, concurrency and idempotency, performance, scalability, auth, security — mapped to OWASP Top 10:2025, LLM Top 10 and MASVS — privacy/KVKK, migrations, push and deep links, errors and observability, config and release, UI and accessibility, testing, AI-generated code and LLM features). Each check is PASS / FAIL / UNCERTAIN / NOT_APPLICABLE with `file:line` evidence; produces a report with a release verdict, then fixes findings one at a time — each fix following current official docs and security guidance, with the source cited — and re-audits. | `/audit`, "is this production ready?", "audit this app before release" |
+| **production-readiness-audit** | Evidence-based audit of AI-generated / vibe-coded apps: 331 checks across 18 areas (architecture and domain, contracts, locale/time/money, lifecycle, networking, concurrency and idempotency, performance, scalability, auth, security — mapped to OWASP Top 10:2025, LLM Top 10 and MASVS — privacy/KVKK, migrations, push and deep links, errors and observability, config and release, UI and accessibility, testing, AI-generated code and LLM features). Each check is PASS / FAIL / UNCERTAIN / NOT_APPLICABLE with `file:line` evidence; produces a report with a release verdict, then fixes findings one at a time — each fix following current official docs and security guidance, with the source cited — and re-audits. Scanners (gitleaks, TruffleHog, Semgrep, SwiftLint, OSV-Scanner…) are not bundled; the audit lists the ones a project needs and installs them only with your approval. Validated against OWASP iGoat-Swift. | `/audit`, "is this production ready?", "audit this app before release" |
 | **context-gardener** | Keeps CLAUDE.md and project memory files accurate and lean: verifies every claim against the repo, removes duplicate and stale content, splits bloated files. | `/tidy-context`, or Claude offers it on its own |
 
 A SessionStart hook reminds Claude when context files have grown large or haven't been groomed in a while (defaults: 150 lines / 21 days). It never edits anything.
@@ -26,7 +26,11 @@ cecom/
 │   └── check-staleness.sh        Context file size/age check (works on macOS bash 3.2)
 └── skills/
     ├── engineering-manifesto/    SKILL.md, scripts/, references/, assets/
-    ├── production-readiness-audit/  SKILL.md, references/method.md, references/checks/, scripts/
+    ├── production-readiness-audit/
+    │   ├── SKILL.md
+    │   ├── references/           method.md, tools.md (tool registry), checks/ (18 area files)
+    │   ├── scripts/              detect_profile.sh, tools.sh, catalog.py, render_report.py, eval_fixture.py, tests/
+    │   └── evals/igoat-swift/    expected findings for OWASP iGoat-Swift
     └── context-gardener/         SKILL.md
 ```
 
@@ -75,6 +79,7 @@ The permission rules added to a project's `.claude/settings.json` (deny reading/
 - The SessionStart hook does nothing when Claude Code starts in your home directory or `/`, and searches at most 6 directory levels.
 - Audit findings never contain secret values: findings cite `file:line` and the kind of secret, and the report renderer rejects recognizable keys (AWS, GitHub, Stripe, OpenAI, Anthropic, Slack, Google, private keys, JWTs). Audit reports still describe weaknesses — review them before committing to a public repository.
 - The audit runs project build/test commands only for repositories you trust; those commands execute the project's own code.
+- No scanner ships with the plugin. When an audit needs one (gitleaks, TruffleHog, Semgrep, OSV-Scanner, SwiftLint, pip-audit), `tools.sh needed` lists it and it is installed only after you approve, from its official Homebrew formula — never into the audited project. npm/PyPI tools run pinned and ephemeral. See `skills/production-readiness-audit/references/tools.md`.
 
 ## Tests
 
@@ -84,8 +89,18 @@ python3 skills/production-readiness-audit/scripts/catalog.py lint
 python3 -m unittest discover -s skills/production-readiness-audit/scripts/tests
 ```
 
+End-to-end check of the audit against a known-vulnerable app (needs a findings file from a real `/audit` run on OWASP iGoat-Swift, cloned on demand into `~/.cache/cecom/fixtures/` — never into the plugin):
+
+```bash
+python3 skills/production-readiness-audit/scripts/eval_fixture.py <findings.jsonl> \
+  skills/production-readiness-audit/evals/igoat-swift/expected.json
+```
+
+Last result (2026-10-06): detected 24/24 known weaknesses, located 23/24, 1 flagged for runtime verification.
+
 ## Changelog
 
+- **0.5.0** — Tested on OWASP iGoat-Swift (detected 24/24 known weaknesses, located 23/24, 1 flagged for runtime verification). On-demand tools: `tools.sh` lists what a project's audit needs and installs approved tools from official Homebrew formulae — nothing ships with the plugin; tool registry with versions and verification rules (`references/tools.md`). Four mobile checks (app-switcher snapshot, pasteboard, keyboard cache, Keychain accessibility class); on-device SQL injection in SEC-005; MASVS-RESILIENCE mapping corrected; stale tools (madge, ts-prune, depcheck) replaced. Profile detection finds nested Xcode/Android projects. FAIL evidence must list every affected location. Fixture scoring script and iGoat expected findings.
 - **0.4.0** — Audit: new `architecture` (ARCH, DOMAIN) and `scalability` (SCALE) areas; password hashing, secure randomness, crypto, audit-log and session-cookie checks; OWASP Top 10:2025, LLM Top 10 and MASVS mapping; KVKK/GDPR notice, records and non-production data checks; performance budgets, asset delivery and resource limits; distributed tracing; integration, E2E and regression test checks; agent-governance checks (327 checks in total). Every proposed or applied fix must follow current official docs and security guidance and cite its source (`fix.reference`, enforced by the report renderer). Manifesto 1.2: rule that fixes use the current secure approach, workflows/sagas, OWASP baselines and cryptography rules, resource limits.
 - **0.3.1** — Security and accuracy review: permission rules use the current syntax and match `.env` files at any depth, with more force-push variants; documented that Bash rules are not a security boundary; audit findings are checked for leaked secrets and the method forbids copying them; project commands run only for trusted repositories; the SessionStart hook skips `$HOME` and `/` and limits search depth; context-gardener backs up files before editing; the manifesto installer escapes project names safely; corrected the locale-sensitivity facts in I18N-001; README gained requirements and security notes.
 - **0.3.0** — Added the `production-readiness-audit` skill and the `/audit` command: a 286-check catalog, an evidence and severity method, profile detection, plan/report scripts with validation, and tests.

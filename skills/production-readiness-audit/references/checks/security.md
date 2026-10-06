@@ -10,7 +10,7 @@ Includes the misconfigurations that AI-generated and tutorial-derived code ships
 | SEC-002 | No secrets are committed — now or in Git history; `.env` files are git-ignored and not tracked | `git ls-files \| rg -i "\.env"`, `gitleaks detect`, `git log -p -S "sk_"` | P0 | all |
 | SEC-003 | Database/BaaS access rules are not open: Supabase RLS enabled on every table with real policies, Firebase/Firestore/Storage rules not `allow read, write: if true`, no public buckets for private files | `supabase/migrations`, `firestore.rules`, `storage.rules`, bucket policies | P0 | api, db |
 | SEC-004 | Every endpoint validates input server-side against a schema (types, lengths, ranges, formats) | validators at handler entry | P1 | api |
-| SEC-005 | No injection: SQL is parameterized, no NoSQL operator injection (`$where`, `$ne` from JSON bodies), no shell commands built from input, no template injection | raw queries, string-built SQL, `exec(`, `child_process`, `subprocess(..., shell=True)` | P0 | api |
+| SEC-005 | No injection: SQL is parameterized — on the server and in on-device SQLite/Core Data predicates (`sqlite3_prepare` with bound parameters, `NSPredicate` with arguments, never string-built `executeSQL`) — no NoSQL operator injection (`$where`, `$ne` from JSON bodies), no shell commands built from input, no template injection | raw queries, string-built SQL, `exec(`, `child_process`, `subprocess(..., shell=True)`, `sqlite3_exec`, `NSPredicate(format:` with interpolation | P0 | all |
 | SEC-006 | No XSS/HTML/Markdown injection: output is escaped; `dangerouslySetInnerHTML`/`v-html`/`innerHTML` only with sanitized input; Markdown renderers sanitize | renderers, rich text, WebViews | P0 | client |
 | SEC-007 | WebViews: JavaScript bridges are minimal, only trusted origins load, no arbitrary URL loading from untrusted input, file access disabled | `WKWebView`, `WebView`, `react-native-webview` props | P1 | mobile |
 | SEC-008 | No SSRF: the server fetches user-supplied URLs only via an allow-list, blocking private ranges and cloud metadata (`169.254.169.254`) | URL fetchers, link previews, webhooks registration, image proxies | P0 | api |
@@ -30,6 +30,10 @@ Includes the misconfigurations that AI-generated and tutorial-derived code ships
 | SEC-022 | Cryptography uses vetted libraries and current algorithms (AES-GCM or ChaCha20-Poly1305, TLS 1.2+ with 1.3 preferred); no home-made crypto, no ECB mode, no hard-coded keys or IVs | `createCipheriv`, `CryptoKit`/`CommonCrypto`, `javax.crypto.Cipher`, key literals | P1 | all |
 | SEC-023 | Security-relevant events go to an audit log the actor can't edit (sign-ins and failures, password/email changes, role and permission changes, data exports, admin actions), without secrets or unnecessary personal data | audit log table/service | P2 | api |
 | SEC-024 | Session cookies use `Secure`, `HttpOnly` and `SameSite`; sessions rotate on sign-in, expire on inactivity, and sign-out invalidates the server-side session | cookie and session configuration | P1 | web, api |
+| SEC-025 | Screens showing sensitive data are hidden from the app-switcher snapshot and, where needed, from screen recording (cover or blur on `sceneWillResignActive`; Android `FLAG_SECURE`) | scene/app delegate lifecycle, `UIScreen.isCaptured`, window flags | P2 | mobile |
+| SEC-026 | Sensitive values aren't left on the general pasteboard: copying is disabled on secret fields, or items are local-only and expiring (`UIPasteboard` `.localOnly`/`.expirationDate`; Android `ClipDescription.EXTRA_IS_SENSITIVE`) | `UIPasteboard.general`, `ClipboardManager`, copy actions on sensitive fields | P2 | mobile |
+| SEC-027 | Sensitive text inputs aren't cached by the keyboard: secrets use secure entry, other sensitive fields disable autocorrection and suggestions (`isSecureTextEntry`, `autocorrectionType = .no`, `.textContentType`; Android `textPassword`/`textNoSuggestions`) | text fields for passwords, PINs, card numbers, personal data | P2 | mobile |
+| SEC-028 | Keychain items use a restrictive accessibility class (`kSecAttrAccessibleWhenUnlockedThisDeviceOnly` or `…AfterFirstUnlockThisDeviceOnly`), never `kSecAttrAccessibleAlways*`; Android Keystore keys are non-exportable and hardware-backed where available | `SecItemAdd`/`SecItemUpdate` attributes, keychain wrapper config, `KeyGenParameterSpec` | P1 | mobile |
 
 ## SUPPLY — dependencies
 
@@ -38,7 +42,7 @@ Includes the misconfigurations that AI-generated and tutorial-derived code ships
 | SUPPLY-001 | A lockfile is committed and CI installs from it (`npm ci`, `pnpm install --frozen-lockfile`, `pip install -r` with pins/hashes) | lockfiles, CI install step | P1 | all |
 | SUPPLY-002 | Every dependency is the intended, real package: names checked against the registry (AI tools hallucinate package names that attackers then register), publisher and download counts plausible | `package.json`, `requirements.txt`, `Podfile`, `build.gradle`, `pubspec.yaml` | P0 | all |
 | SUPPLY-003 | Known vulnerabilities are scanned (`npm audit`, `pip-audit`, `osv-scanner`, Dependabot) and high/critical ones addressed | run the scanner; CI config | P1 | all |
-| SUPPLY-004 | Unused dependencies are removed (smaller attack surface and bundle) | `depcheck`/`knip`, imports vs manifest | P3 | all |
+| SUPPLY-004 | Unused dependencies are removed (smaller attack surface and bundle) | `knip`, imports vs manifest | P3 | all |
 | SUPPLY-005 | Dependency licenses are compatible with how the product is distributed | license checker output | P2 | all |
 | SUPPLY-006 | CI actions and container base images are pinned (version or digest), not `@main`/`latest` | `.github/workflows`, `Dockerfile` | P2 | all |
 
@@ -67,11 +71,11 @@ Use this to answer "does the audit cover OWASP?". The mapping is by intent; a fu
 
 | Group | Checks |
 |---|---|
-| MASVS-STORAGE | AUTH-006, SEC-011, PRIV-005 |
+| MASVS-STORAGE | AUTH-006, SEC-011, SEC-028, PRIV-005 |
 | MASVS-CRYPTO | SEC-021, SEC-022 |
 | MASVS-AUTH | AUTH-004 … AUTH-011 |
 | MASVS-NETWORK | NET-015 |
-| MASVS-PLATFORM | SEC-007, LINK-001, LINK-010, PUSH-009 |
+| MASVS-PLATFORM | SEC-007, SEC-025, SEC-026, SEC-027, LINK-001, LINK-010, PUSH-009 |
 | MASVS-CODE | SUPPLY-001 … SUPPLY-003, REL-002, AIGEN-004 |
-| MASVS-RESILIENCE | SEC-018 (anti-tampering and reverse-engineering resistance are otherwise out of scope) |
+| MASVS-RESILIENCE | Not covered: tampering, reverse engineering and runtime-manipulation resistance need binary analysis, which is outside this source-code audit (see `references/tools.md`) |
 | MASVS-PRIVACY | PRIV-001 … PRIV-015 |

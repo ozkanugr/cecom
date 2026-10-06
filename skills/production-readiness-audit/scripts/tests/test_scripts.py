@@ -265,6 +265,14 @@ class DetectProfileTests(unittest.TestCase):
                  "App/Push.swift": "UNUserNotificationCenter.current()\n"}
         self.assertEqual(self.detect(files), {"mobile", "pay", "db", "push"})
 
+    def test_nested_xcode_project_with_pods(self):
+        files = {"iGoat/iGoat.xcodeproj/project.pbxproj": "",
+                 "iGoat/Podfile": "pod 'RealmSwift'\npod 'YapDatabase'\n",
+                 "iGoat/Source/Model/Store.xcdatamodeld/contents": ""}
+        tags = self.detect(files)
+        self.assertIn("mobile", tags)
+        self.assertIn("db", tags)
+
     def test_supabase_project_is_api(self):
         self.assertIn("api", self.detect({"supabase/config.toml": ""}))
 
@@ -274,6 +282,91 @@ class DetectProfileTests(unittest.TestCase):
 
     def test_empty_directory(self):
         self.assertEqual(self.detect({"README.md": "hi"}), set())
+
+
+class EvalFixtureTests(unittest.TestCase):
+    def test_detected_vs_located(self):
+        import eval_fixture
+        expected = {"items": [
+            {"exercise": "A", "path": "Exercises/Storage/A", "expect_fail_any": ["SEC-011"]},
+            {"exercise": "B", "path": "Exercises/Storage/B", "expect_fail_any": ["SEC-011"]},
+            {"exercise": "K", "path": "server/*.private.key", "expect_fail_any": ["SEC-002"]},
+            {"exercise": "C", "path": "Exercises/Crypto", "expect_fail_any": ["SEC-022"]}]}
+        findings = [
+            {"id": "SEC-011", "status": "FAIL", "evidence": [{"file": "App/Source/Exercises/Storage/A/AVC.swift"}]},
+            {"id": "SEC-002", "status": "FAIL", "evidence": [{"file": "server/hostile.private.key"}]},
+            {"id": "SEC-022", "status": "PASS", "evidence": [{"file": "Exercises/Crypto/C.swift"}]}]
+        r = {x["exercise"]: x for x in eval_fixture.score(findings, expected)}
+        self.assertTrue(r["A"]["located"])
+        self.assertTrue(r["B"]["detected"])
+        self.assertFalse(r["B"]["located"])      # one broad finding must not count for B
+        self.assertTrue(r["K"]["located"])       # glob path
+        self.assertFalse(r["C"]["detected"])     # PASS doesn't count
+
+    def test_path_alternatives_and_uncertain_flagging(self):
+        import eval_fixture
+        expected = {"items": [
+            {"exercise": "X", "path": ["Exercises/X", "server/x.php"], "expect_fail_any": ["SEC-022"]},
+            {"exercise": "S3", "path": "Exercises/Cloud", "expect_fail_any": ["SEC-003"]}]}
+        findings = [
+            {"id": "SEC-022", "status": "FAIL", "evidence": [{"file": "server/x.php"}]},
+            {"id": "SEC-003", "status": "UNCERTAIN", "evidence": [{"file": "App/Exercises/Cloud/VC.swift"}]}]
+        r = {x["exercise"]: x for x in eval_fixture.score(findings, expected)}
+        self.assertTrue(r["X"]["located"])
+        self.assertFalse(r["S3"]["located"])
+        self.assertTrue(r["S3"]["flagged"])
+
+
+class ToolsTests(unittest.TestCase):
+    SCRIPT = SCRIPTS / "tools.sh"
+
+    def run_tools(self, *args, files=None):
+        with tempfile.TemporaryDirectory() as d:
+            for rel, content in (files or {}).items():
+                p = Path(d, rel)
+                p.parent.mkdir(parents=True, exist_ok=True)
+                p.write_text(content, encoding="utf-8")
+            argv = [a.replace("{dir}", d) for a in args]
+            return subprocess.run(["/bin/bash", str(self.SCRIPT), *argv], capture_output=True, text=True)
+
+    def tools(self, out):
+        return {line.split("\t")[0]: line.split("\t")[1] for line in out.splitlines()[1:] if line.strip()}
+
+    def test_ios_project_needs_swift_tools_and_reports_dependency_gap(self):
+        res = self.run_tools("needed", "{dir}", files={
+            "App.xcodeproj/project.pbxproj": "", "App/Main.swift": "print(1)\n",
+            "Podfile": "pod 'Realm'\n", "Podfile.lock": "PODS:\n"})
+        self.assertEqual(res.returncode, 0, res.stderr)
+        t = self.tools(res.stdout)
+        for name in ("ripgrep", "gitleaks", "trufflehog", "semgrep", "swiftlint", "xcodebuild"):
+            self.assertIn(name, t)
+        self.assertEqual(t["apple-deps"], "gap")
+        self.assertNotIn("osv-scanner", t)   # no lockfile osv-scanner can read
+        self.assertNotIn("knip", t)
+
+    def test_js_project_needs_js_tools(self):
+        res = self.run_tools("needed", "{dir}", files={"package.json": "{}", "package-lock.json": "{}"})
+        t = self.tools(res.stdout)
+        self.assertIn("osv-scanner", t)
+        self.assertIn("npm", t)
+        self.assertEqual(t["knip"], "on-demand")
+        self.assertEqual(t["dependency-cruiser"], "on-demand")
+        self.assertNotIn("swiftlint", t)
+
+    def test_install_rejects_tools_outside_the_allow_list(self):
+        res = self.run_tools("install", "curl-pipe-bash")
+        self.assertNotEqual(res.returncode, 0)
+        self.assertIn("not a Homebrew-installed audit tool", res.stderr)
+
+    def test_needed_requires_a_directory(self):
+        res = self.run_tools("needed", "/definitely/not/here")
+        self.assertEqual(res.returncode, 2)
+
+    def test_status_lists_every_tool(self):
+        res = self.run_tools("status")
+        t = self.tools(res.stdout)
+        for name in ("ripgrep", "gitleaks", "trufflehog", "osv-scanner", "semgrep", "swiftlint", "pip-audit"):
+            self.assertIn(name, t)
 
 
 if __name__ == "__main__":
