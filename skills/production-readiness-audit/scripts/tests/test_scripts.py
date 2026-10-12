@@ -171,23 +171,23 @@ class RenderTests(unittest.TestCase):
         }
         for kind, value in leaks.items():
             with self.subTest(kind=kind):
-                row = finding("SEC-002", "FAIL", severity="P0",
+                row = finding("CONF-003", "FAIL", severity="P0",
                               evidence=[{"file": ".env", "line": 3, "note": f"STRIPE_KEY={value}"}])
                 self.assertTrue(any(kind in p for p in self.problems([row])))
-        redacted = finding("SEC-002", "FAIL", severity="P0",
+        redacted = finding("CONF-003", "FAIL", severity="P0",
                            evidence=[{"file": ".env", "line": 3, "note": "live Stripe secret key (sk_l…) committed"}])
         self.assertEqual(self.problems([redacted]), [])
 
     def test_fix_reference_is_rendered(self):
-        rows = [finding("SEC-020", "FAIL", severity="P0",
-                        fix={"status": "proposed", "summary": "Hash with Argon2id",
-                             "reference": "OWASP Password Storage Cheat Sheet — Argon2id"})]
+        rows = [finding("CONF-003", "FAIL", severity="P0",
+                        fix={"status": "proposed", "summary": "Fail startup when JWT_SECRET is unset",
+                             "reference": "OWASP Secrets Management Cheat Sheet — configuration"})]
         code, _, err = self.run_render(rows)
         self.assertEqual(code, 0, err)
-        self.assertIn("**Source:** OWASP Password Storage Cheat Sheet — Argon2id", (self.d / "r.md").read_text())
+        self.assertIn("**Source:** OWASP Secrets Management Cheat Sheet — configuration", (self.d / "r.md").read_text())
 
     def test_pass_with_search_record_only_is_valid(self):
-        row = finding("SEC-002", "PASS", evidence=[], searched=["gitleaks detect --no-banner"])
+        row = finding("CONF-003", "PASS", evidence=[], searched=["rg -n 'JWT_SECRET' src"])
         self.assertEqual(self.problems([row]), [])
 
     def test_duplicates_and_plan_coverage(self):
@@ -284,39 +284,6 @@ class DetectProfileTests(unittest.TestCase):
         self.assertEqual(self.detect({"README.md": "hi"}), set())
 
 
-class EvalFixtureTests(unittest.TestCase):
-    def test_detected_vs_located(self):
-        import eval_fixture
-        expected = {"items": [
-            {"exercise": "A", "path": "Exercises/Storage/A", "expect_fail_any": ["SEC-011"]},
-            {"exercise": "B", "path": "Exercises/Storage/B", "expect_fail_any": ["SEC-011"]},
-            {"exercise": "K", "path": "server/*.private.key", "expect_fail_any": ["SEC-002"]},
-            {"exercise": "C", "path": "Exercises/Crypto", "expect_fail_any": ["SEC-022"]}]}
-        findings = [
-            {"id": "SEC-011", "status": "FAIL", "evidence": [{"file": "App/Source/Exercises/Storage/A/AVC.swift"}]},
-            {"id": "SEC-002", "status": "FAIL", "evidence": [{"file": "server/hostile.private.key"}]},
-            {"id": "SEC-022", "status": "PASS", "evidence": [{"file": "Exercises/Crypto/C.swift"}]}]
-        r = {x["exercise"]: x for x in eval_fixture.score(findings, expected)}
-        self.assertTrue(r["A"]["located"])
-        self.assertTrue(r["B"]["detected"])
-        self.assertFalse(r["B"]["located"])      # one broad finding must not count for B
-        self.assertTrue(r["K"]["located"])       # glob path
-        self.assertFalse(r["C"]["detected"])     # PASS doesn't count
-
-    def test_path_alternatives_and_uncertain_flagging(self):
-        import eval_fixture
-        expected = {"items": [
-            {"exercise": "X", "path": ["Exercises/X", "server/x.php"], "expect_fail_any": ["SEC-022"]},
-            {"exercise": "S3", "path": "Exercises/Cloud", "expect_fail_any": ["SEC-003"]}]}
-        findings = [
-            {"id": "SEC-022", "status": "FAIL", "evidence": [{"file": "server/x.php"}]},
-            {"id": "SEC-003", "status": "UNCERTAIN", "evidence": [{"file": "App/Exercises/Cloud/VC.swift"}]}]
-        r = {x["exercise"]: x for x in eval_fixture.score(findings, expected)}
-        self.assertTrue(r["X"]["located"])
-        self.assertFalse(r["S3"]["located"])
-        self.assertTrue(r["S3"]["flagged"])
-
-
 class JsChecksTests(unittest.TestCase):
     SCRIPT = SCRIPTS / "js_checks.sh"
 
@@ -370,23 +337,19 @@ class ToolsTests(unittest.TestCase):
     def tools(self, out):
         return {line.split("\t")[0]: line.split("\t")[1] for line in out.splitlines()[1:] if line.strip()}
 
-    def test_ios_project_needs_swift_tools_and_reports_dependency_gap(self):
+    def test_ios_project_needs_swift_tools(self):
         res = self.run_tools("needed", "{dir}", files={
             "App.xcodeproj/project.pbxproj": "", "App/Main.swift": "print(1)\n",
             "Podfile": "pod 'Realm'\n", "Podfile.lock": "PODS:\n"})
         self.assertEqual(res.returncode, 0, res.stderr)
         t = self.tools(res.stdout)
-        for name in ("ripgrep", "gitleaks", "trufflehog", "semgrep", "swiftlint", "xcodebuild"):
+        for name in ("ripgrep", "swiftlint", "xcodebuild"):
             self.assertIn(name, t)
-        self.assertEqual(t["apple-deps"], "gap")
-        self.assertNotIn("osv-scanner", t)   # no lockfile osv-scanner can read
         self.assertNotIn("knip", t)
 
     def test_js_project_needs_js_tools(self):
         res = self.run_tools("needed", "{dir}", files={"package.json": "{}", "package-lock.json": "{}"})
         t = self.tools(res.stdout)
-        self.assertIn("osv-scanner", t)
-        self.assertIn("npm", t)
         self.assertEqual(t["knip"], "on-demand")
         self.assertEqual(t["dependency-cruiser"], "on-demand")
         self.assertNotIn("swiftlint", t)
@@ -403,7 +366,7 @@ class ToolsTests(unittest.TestCase):
     def test_status_lists_every_tool(self):
         res = self.run_tools("status")
         t = self.tools(res.stdout)
-        for name in ("ripgrep", "gitleaks", "trufflehog", "osv-scanner", "semgrep", "swiftlint", "pip-audit"):
+        for name in ("ripgrep", "swiftlint", "xcodebuild"):
             self.assertIn(name, t)
 
 

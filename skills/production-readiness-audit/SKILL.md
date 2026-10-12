@@ -1,6 +1,6 @@
 ---
 name: production-readiness-audit
-description: Evidence-based production-readiness audit for AI-generated / vibe-coded apps (mobile, web, backend). Runs 330+ concrete checks across architecture/domain, contracts, text/time/money, lifecycle, networking/offline, concurrency/idempotency, performance, scalability, auth, security/supply chain (OWASP-mapped), privacy/KVKK, persistence/migrations, push/deep links, errors/observability, config/release, UI/accessibility, testing, AI-generated code smells and LLM features. Every check ends PASS, FAIL, UNCERTAIN or NOT_APPLICABLE with file:line evidence; failures are then fixed one by one with approval. Use this whenever the user asks to audit, review, harden or bug-hunt an app before release, asks whether code is production ready, wants an edge-case / "what could break" / pre-launch / control-list review of a codebase, or asks about a single risk area across the codebase (offline handling, race conditions, double submits, token refresh, migrations, secrets) — even if they don't say "audit".
+description: Evidence-based production-readiness audit for AI-generated / vibe-coded apps (mobile, web, backend). Runs ~300 concrete checks across architecture/domain, contracts, text/time/money, lifecycle, networking/offline, concurrency/idempotency, performance, scalability, auth, privacy/KVKK, persistence/migrations, push/deep links, errors/observability, config/release, UI/accessibility, testing, AI-generated code smells and LLM features. Every check ends PASS, FAIL, UNCERTAIN or NOT_APPLICABLE with file:line evidence; failures are then fixed one by one with approval. Use this whenever the user asks to audit, review, harden or bug-hunt an app before release, asks whether code is production ready, wants an edge-case / "what could break" / pre-launch / control-list review of a codebase, or asks about a single risk area across the codebase (offline handling, race conditions, double submits, token refresh, migrations) — even if they don't say "audit". Security vulnerability review (secrets scanning, injection, dependency CVEs, OWASP) is not covered here — use the security-audit skill for that.
 ---
 
 # Production readiness audit
@@ -22,7 +22,7 @@ Pick the branch, run its steps in order, then run **Verify**. `SKILL_DIR` is the
 - **Never copy secrets into findings.** Cite where a secret is, not its value (at most 4 leading characters); `render_report.py` rejects recognizable keys. A found secret must be rotated — say so. Reports describe weaknesses: suggest the user review them before committing to a public repository.
 - **Fixes are current and secure, with a cited source.** Every proposed or applied fix follows the official documentation for the versions in use and current security guidance (OWASP Cheat Sheets, ASVS/MASVS, platform docs) — looked up, not remembered — with no deprecated APIs or outdated algorithms. Cite it in `fix.reference`; `render_report.py` rejects fixes without one.
 - **Run project commands only when trusted.** Build/test scripts execute the project's code; for code of unknown origin ask first. Never run anything that deploys, migrates shared data, sends messages, or touches production.
-- **Respect the engineering manifesto.** If the project declares `Tier: T0–T3` in `CLAUDE.md`, use it: for T0 suggest a scoped audit (security, config-release, ai-generated); for T2/T3 run the full audit. Fixes that touch auth, DB schema, dependencies, CI or production configuration need the user's approval first.
+- **Respect the engineering manifesto.** If the project declares `Tier: T0–T3` in `CLAUDE.md`, use it: for T0 suggest a scoped audit (config-release, ai-generated); for T2/T3 run the full audit. Fixes that touch auth, DB schema, dependencies, CI or production configuration need the user's approval first.
 
 ## A. Full audit
 
@@ -110,6 +110,8 @@ The report gains a "Changes since the previous audit" section (fixed, regressed,
 
 ## Check areas
 
+Security checks (application security, secrets, dependency vulnerabilities) are not in this catalog; for those, use the `security-audit` skill.
+
 | File (`references/checks/`) | Prefixes | Covers |
 |---|---|---|
 | `architecture.md` | ARCH, DOMAIN | Business-logic placement, module boundaries, SDK adapters, DI, state machines, workflows/sagas |
@@ -120,7 +122,6 @@ The report gains a "Changes since the previous audit" section (fixed, regressed,
 | `concurrency.md` | CONC, IDEM | Races, double submit, out-of-order responses, atomic updates, idempotency |
 | `performance.md` | PERF | Images, lists, caches, leaks, main-thread work, N+1 queries, indexes, bundle size |
 | `auth.md` | AUTH | Object-level authorization, token handling and storage, logout/account switch, deletion |
-| `security.md` | SEC, SUPPLY | Client secrets, open DB rules, injection, SSRF, uploads, CORS, webhooks, receipts, password hashing, crypto, audit log, dependencies; OWASP Top 10:2025 / LLM / MASVS mapping |
 | `privacy.md` | PRIV | Minimization, PII in analytics and crash logs, consent and privacy notices, KVKK/GDPR records and transfers, deletion/export, SDK disclosures |
 | `scalability.md` | SCALE | Stateless servers, queues and dead-letter handling, schedulers, connection pooling, cache invalidation, quotas |
 | `persistence.md` | DATA | Transactions, constraints, migrations, local DB upgrades and corruption, backups |
@@ -143,11 +144,6 @@ The report gains a "Changes since the previous audit" section (fixed, regressed,
    python3 -m unittest discover -s SKILL_DIR/scripts/tests
    ```
    **Done when:** lint prints `ok` and the tests end with `OK`.
-4. If you changed checks or the method in a way that affects mobile security, re-run the audit on OWASP iGoat-Swift (clone on demand into `~/.cache/cecom/fixtures/`, never into the plugin) and score it:
-   ```bash
-   python3 SKILL_DIR/scripts/eval_fixture.py <findings.jsonl> SKILL_DIR/evals/igoat-swift/expected.json
-   ```
-   **Done when:** located recall is at least what the previous run reached.
 
 ## Chat summary format
 
@@ -165,12 +161,10 @@ Next:       which findings to fix first
 | Path | Purpose |
 |---|---|
 | `references/method.md` | Evidence rules, statuses, severity, scope tags, finding schema, fix policy, subagent brief |
-| `references/checks/*.md` | The check catalog (18 area files, table above) |
-| `references/tools.md` | Tools the audit runs: versions, install/verification rules, known gaps, and the iGoat-Swift test target |
+| `references/checks/*.md` | The check catalog (17 area files, table above) |
+| `references/tools.md` | Tools the audit runs: versions, install/verification rules |
 | `scripts/js_checks.sh` | ESLint (Next.js / typescript-eslint config, or the project's own) and `tsc` for JS/TS projects; sandboxed, compatible-version installs (A step 3) |
 | `scripts/tools.sh` | Lists the tools a project needs and which are missing; installs approved ones via Homebrew (A step 1) |
-| `scripts/eval_fixture.py` | Scores an audit of a known-vulnerable fixture against its expected findings (Verify step 4) |
-| `evals/igoat-swift/expected.json` | Expected findings for OWASP iGoat-Swift, written before any audit run |
 | `scripts/detect_profile.sh` | Detects profile tags from manifests and source (A step 1) |
 | `scripts/catalog.py` | Lints the catalog and builds the audit plan (A step 2, Verify) |
 | `scripts/render_report.py` | Validates findings and renders the report, optionally compared with a previous audit (A step 5, D) |

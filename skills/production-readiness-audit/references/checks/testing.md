@@ -27,7 +27,7 @@ For each scenario, record `PASS` when an automated test covers it (cite the test
 | TEST-017 | Turkish locale (`tr-TR`) and an RTL locale | I18N-001, I18N-010, I18N-011 | P2 | all |
 | TEST-018 | Timezone and DST changes; device clock set wrong | TIME-001…TIME-005 | P2 | all |
 | TEST-019 | Deep link and notification tap on cold start and when logged out | LIFE-005, LINK-006, LINK-007 | P1 | client |
-| TEST-020 | Payments: success, failure, cancellation, retry, restore | IDEM-001, IDEM-002, SEC-018 | P0 | pay |
+| TEST-020 | Payments: success, failure, cancellation, retry, restore | IDEM-001, IDEM-002 | P0 | pay |
 
 ## TQ — test quality
 

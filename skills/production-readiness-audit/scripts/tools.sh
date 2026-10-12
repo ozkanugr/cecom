@@ -11,7 +11,7 @@
 # Works with macOS's stock bash 3.2.
 set -uo pipefail
 
-BREW_TOOLS="ripgrep gitleaks trufflehog osv-scanner semgrep swiftlint pip-audit"
+BREW_TOOLS="ripgrep swiftlint"
 
 bin_of() { # tool name → command name
   case "$1" in
@@ -25,7 +25,6 @@ version_of() { # prints the installed version, or nothing
   command -v "$b" >/dev/null 2>&1 || return 0
   case "$1" in
     xcodebuild) xcodebuild -version 2>/dev/null | head -1 ;;
-    gitleaks) gitleaks version 2>/dev/null | head -1 ;;
     *) "$b" --version 2>&1 | head -1 | sed 's/^[^0-9]*//' | cut -d' ' -f1 ;;
   esac
 }
@@ -62,15 +61,8 @@ cmd_needed() {
   cd "$dir" || return 2
   printf 'tool\tstatus\tversion\twhy\n'
   row ripgrep "code search for every check"
-  row gitleaks "secrets in files and Git history (SEC-002, SEC-019)"
-  row trufflehog "second secrets scanner (SEC-002)"
-  row semgrep "static analysis: injection, XSS, SSRF, crypto (SEC-005/006/008/009/022)"
-  local js=0 py=0 osv=0
+  local js=0
   has package.json && js=1
-  has requirements.txt pyproject.toml Pipfile && py=1
-  has package-lock.json pnpm-lock.yaml yarn.lock bun.lock requirements.txt poetry.lock uv.lock Pipfile.lock pdm.lock \
-      pubspec.lock go.mod Cargo.lock gradle.lockfile pom.xml Gemfile.lock composer.lock && osv=1
-  [ "$osv" -eq 1 ] && row osv-scanner "known-vulnerable dependencies (SUPPLY-003)"
   if [ "$js" -eq 1 ] || has tsconfig.json; then
     printf 'eslint\ton-demand\t-\tESLint (Next.js config for Next apps, typescript-eslint for TS): AIGEN-003/004, CONC-002/006, PERF-002, A11Y-010 — see js_checks.sh plan\n'
   fi
@@ -78,26 +70,21 @@ cmd_needed() {
     printf 'tsc\ton-demand\t-\tproject'"'"'s own TypeScript type check (AIGEN-003, AIGEN-014) — js_checks.sh typecheck; UNCERTAIN without node_modules\n'
   fi
   if [ "$js" -eq 1 ]; then
-    row npm "npm audit for JS dependencies (SUPPLY-003)"
     ephemeral dependency-cruiser "circular deps and layers, JS/TS (ARCH-003/006): npx --yes dependency-cruiser@<ver>"
-    ephemeral knip "unused files/exports/deps, JS/TS (AIGEN-009, SUPPLY-004): npx --yes knip@<ver>"
+    ephemeral knip "unused files/exports/deps, JS/TS (AIGEN-009): npx --yes knip@<ver>"
   fi
-  [ "$py" -eq 1 ] && row pip-audit "Python dependency vulnerabilities (SUPPLY-003)"
   if has '*.swift'; then
     row swiftlint "force unwraps, try!, unsafe Swift patterns (AIGEN-004, CONTRACT-008)"
   fi
   if has '*.xcodeproj' '*.xcworkspace'; then
     row xcodebuild "build and tests for Apple projects (AIGEN-003, TQ-005)"
   fi
-  if has Podfile.lock Package.resolved; then
-    printf 'apple-deps\tgap\t-\tno scanner reads Podfile.lock/Package.resolved: use Dependabot (SPM on GitHub) or manual review; else SUPPLY-003 UNCERTAIN\n'
-  fi
   return 0
 }
 
 cmd_status() {
   printf 'tool\tstatus\tversion\twhy\n'
-  for t in $BREW_TOOLS npm xcodebuild; do row "$t" "-"; done
+  for t in $BREW_TOOLS xcodebuild; do row "$t" "-"; done
 }
 
 cmd_install() {
