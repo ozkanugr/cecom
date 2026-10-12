@@ -39,6 +39,8 @@ cecom/
 - `bash` (macOS's stock 3.2 is fine), `git`
 - `jq` — used by the manifesto installer to merge `.claude/settings.json` (without it, that step is skipped and reported)
 - `python3` (3.8+) — used by the audit scripts; standard library only
+- Optional: Homebrew — installs audit tools (ripgrep, SwiftLint) after your approval
+- Optional: Node.js with `npm` — ESLint/TypeScript checks for JS/TS projects (`js_checks.sh`)
 
 ## Installation
 
@@ -74,11 +76,11 @@ The permission rules added to a project's `.claude/settings.json` (deny reading/
 
 ## Security notes
 
-- The plugin's own scripts and hook make no network calls: they read and write local files only, and the hook reads file sizes and a timestamp and never edits anything. (Commands Claude runs during an audit, such as ephemeral `npx` linters, may use the network.)
+- The hook and the audit's report and plan scripts make no network calls: they read and write local files only, and the hook reads file sizes and a timestamp and never edits anything. Only two steps download, and only after you approve: `tools.sh install` (Homebrew) and `js_checks.sh prepare` (npm, into `~/.cache/cecom/tools/`). Ephemeral `npx`/`uvx` linters Claude runs during an audit also use the network.
 - The SessionStart hook does nothing when Claude Code starts in your home directory or `/`, and searches at most 6 directory levels.
 - Audit findings never contain secret values: findings cite `file:line` and the kind of secret, and the report renderer rejects recognizable keys (AWS, GitHub, Stripe, OpenAI, Anthropic, Slack, Google, private keys, JWTs). Audit reports still describe weaknesses — review them before committing to a public repository.
 - The audit runs project build/test commands only for repositories you trust; those commands execute the project's own code.
-- No scanner ships with the plugin. When an audit needs one (ripgrep, SwiftLint), `tools.sh needed` lists it and it is installed only after you approve, from its official Homebrew formula — never into the audited project. npm/PyPI tools run pinned and ephemeral. See `skills/production-readiness-audit/references/tools.md`.
+- No tool ships with the plugin. When an audit needs one (ripgrep, SwiftLint), `tools.sh needed` lists it and it is installed only after you approve, from its official Homebrew formula — never into the audited project. npm/PyPI tools run pinned and ephemeral. See `skills/production-readiness-audit/references/tools.md`.
 
 ## Tests
 
